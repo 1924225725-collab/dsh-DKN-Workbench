@@ -1,12 +1,12 @@
-# DKN Agent for DSH
+# DSH Workbench
 
-Windows DSH plugin foundation preview `1.9.6`, targeting DSH `0.2.2-rc.1`. Includes native Codex projects/conversations, domestic and international CodeBuddy CLI model providers, a ZCode CLI app-server model provider, and an embedded collaboration core extracted from Agent Hub. No gateway, remote cluster or DSH desktop distribution is included.
+DSH Workbench (formerly DKN Agent) is an integrated workbench plugin for DeepSeek Harness on Windows. Current preview: `1.9.6`, targeting DSH `0.2.2-rc.1`. Includes native Codex projects/conversations, domestic and international CodeBuddy CLI model providers, a ZCode CLI app-server model provider, and an embedded collaboration core extracted from Agent Hub. No gateway, remote cluster or DSH desktop distribution is included.
 
-[Latest release](https://github.com/1924225725-collab/dsh-dkn-agent/releases/latest) · [Standalone CodeBuddy CLI (China)](https://github.com/1924225725-collab/dsh-codebuddy-cli-cn) · [简体中文](README.md)
+[Latest release](https://github.com/1924225725-collab/dsh-workbench/releases/latest) · [Standalone CodeBuddy CLI (China)](https://github.com/1924225725-collab/dsh-codebuddy-cli-cn) · [简体中文](README.md)
 
 ## Use
 
-Download `dsh-dkn-agent-1.9.6.tgz` from [GitHub Releases](https://github.com/1924225725-collab/dsh-dkn-agent/releases/tag/v1.9.6) and install it in DSH's plugin manager. Open the plugin settings to connect the installed official Codex runtime and configure optional CLI paths. The Codex CLI page also supports executable checks, an explicit model probe, model lists, a default working directory, timeout and reasoning defaults. If the sidebar patch is staged, fully quit DSH, wait approximately 15 seconds, then reopen. Closing to the tray does not release the archive lock.
+Download `dsh-dkn-agent-1.9.6.tgz` from [GitHub Releases](https://github.com/1924225725-collab/dsh-workbench/releases/tag/v1.9.6) and install it in DSH's plugin manager. Open the plugin settings to connect the installed official Codex runtime and configure optional CLI paths. The Codex CLI page also supports executable checks, an explicit model probe, model lists, a default working directory, timeout and reasoning defaults. If the sidebar patch is staged, fully quit DSH, wait approximately 15 seconds, then reopen. Closing to the tray does not release the archive lock.
 
 DSH workspaces and Codex projects share one scrolling area, separated by a divider and Codex heading. Opening a conversation imports its history and continues the same thread in DSH's native conversation view. Menus support projects, thread rename, archive/restore, reassignment and native sections.
 

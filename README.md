@@ -1,12 +1,12 @@
-# DKN Agent for DSH
+# DSH 集成工作台
 
-DKN Agent 是 DeepSeek Harness（DSH）的 Windows 插件。在 DSH 中浏览和继续本机 Codex 项目对话，使用 Codex、CodeBuddy 和 ZCode 的 CLI 模型，并按项目组织 Agent 协作。当前为 `1.9.6` 预览版，适配 DSH `0.2.2-rc.1`。
+DSH 集成工作台是面向 DeepSeek Harness 的 Windows 插件（原名 DKN Agent）。在 DSH 中浏览和继续本机 Codex 项目对话，使用 Codex、CodeBuddy 和 ZCode 的 CLI 模型，并按项目组织 Agent 协作。当前为 `1.9.6` 预览版，适配 DSH `0.2.2-rc.1`。
 
-[下载最新版](https://github.com/1924225725-collab/dsh-dkn-agent/releases/latest) · [独立 CodeBuddy 版（国内 CLI）](https://github.com/1924225725-collab/dsh-codebuddy-cli-cn) · [English](README.en.md)
+[下载最新版](https://github.com/1924225725-collab/dsh-workbench/releases/latest) · [独立 CodeBuddy 版（国内 CLI）](https://github.com/1924225725-collab/dsh-codebuddy-cli-cn) · [English](README.en.md)
 
 ## 安装与入口
 
-1. 从 [GitHub Releases](https://github.com/1924225725-collab/dsh-dkn-agent/releases/tag/v1.9.6) 下载 `dsh-dkn-agent-1.9.6.tgz`。在 DSH 插件管理中选择本地安装包并启用；已有旧版可更新同名插件。
+1. 从 [GitHub Releases](https://github.com/1924225725-collab/dsh-workbench/releases/tag/v1.9.6) 下载 `dsh-dkn-agent-1.9.6.tgz`。在 DSH 插件管理中选择本地安装包并启用；已有旧版可更新同名插件。
 2. 打开“DKN Agent · Codex”设置入口，按需填写官方 Codex CLI 路径；自动发现正常时留空。进入“模型配置 → Codex CLI”后可检测 CLI 版本、发送测试请求、配置模型清单、默认工作目录、调用超时和默认推理强度。模型配置中还提供 ZCode CLI，填写或自动发现 zcode.cjs 后即可使用 ZCode 已登录账号的动态模型目录。
 3. 如果提示侧栏补丁已准备，从应用菜单**完全退出 DSH**，等待约 15 秒再打开。关闭到托盘不会释放归档锁。补丁只支持已核对的 DSH 版本，失败原因显示在设置页。
 4. 工作区与 Codex 项目在**同一滚动区域**：向下滚动，经过分界线和 Codex 标题继续浏览。展开项目并打开对话，使用 DSH 原生对话界面继续。
