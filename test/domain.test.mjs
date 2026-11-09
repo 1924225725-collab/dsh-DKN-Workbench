@@ -1,0 +1,13 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {mkdtemp,mkdir,writeFile,symlink} from 'node:fs/promises';
+import {tmpdir} from 'node:os';
+import {join} from 'node:path';
+import {normalizeItem,flattenHistory,artifactReferences,readArtifact,assertBaseline} from '../lib/codex-domain.js';
+test('native history retains commands, edits, unknown items and item identities',()=>{
+ const raw=flattenHistory({thread:{turns:[{id:'t1',items:[{id:'i1',type:'userMessage',content:[{type:'text',text:'hello'}]},{id:'i2',type:'commandExecution',command:'echo ok',aggregatedOutput:'ok',exitCode:0},{id:'i3',type:'fileChange',status:'completed',changes:[{path:'a.txt',diff:'+A'}]},{id:'i4',type:'newNativeType',result:{keep:true}}]}]}});
+ assert.equal(raw.length,4);assert.equal(raw[2].turnId,'t1');assert.equal(normalizeItem(raw[0]).text,'hello');assert.equal(normalizeItem(raw[1]).exitCode,0);assert.equal(normalizeItem(raw[2]).changes[0].diff,'+A');assert.match(normalizeItem(raw[3]).text,/keep/);
+});
+test('artifact links are references, edits retain native status rather than claiming acceptance',()=>{const cwd=join(tmpdir(),'project');const refs=artifactReferences([{id:'1',type:'agentMessage',text:'[report](C:/synthetic/report.md) [web](https://example.test)'},{id:'2',type:'fileChange',status:'declined',changes:[{path:'a.txt',diff:'+a'}]}],cwd);assert.equal(refs.length,2);assert.equal(refs[0].status,'referenced');assert.equal(refs[1].status,'declined');});
+test('stale project baselines are rejected',()=>{assert.throws(()=>assertBaseline({name:'changed'},{name:'old'},['name']),e=>e.code==='SYNC_CONFLICT');assertBaseline({name:'same'},{name:'same'},['name']);});
+test('file previews confine symlinks, refuse secrets, and serve HTML as text',async()=>{const root=await mkdtemp(join(tmpdir(),'dkn-files-'));const inside=join(root,'project'),outside=join(root,'outside');await mkdir(inside);await mkdir(join(inside,'.ssh'));await mkdir(outside);await writeFile(join(inside,'report.html'),'<script>evil()</script>');await writeFile(join(inside,'.env'),'SECRET');await writeFile(join(inside,'.npmrc'),'token=SECRET');await writeFile(join(inside,'.ssh','id_ed25519'),'PRIVATE');await writeFile(join(outside,'secret.txt'),'private');const file=await readArtifact(join(inside,'report.html'),[inside]);assert.match(file.type,/text\/plain/);for(const secret of ['.env','.npmrc',join('.ssh','id_ed25519')])await assert.rejects(readArtifact(join(inside,secret),[inside]),/认证/);await assert.rejects(readArtifact(join(outside,'secret.txt'),[inside]),/范围/);await symlink(outside,join(inside,'linked'),'junction');await assert.rejects(readArtifact(join(inside,'linked','secret.txt'),[inside]),/范围/);});

@@ -1,0 +1,81 @@
+{
+  "name": "dsh-dkn-agent",
+  "displayName": "DKN Agent",
+  "version": "1.9.6",
+  "bundledCodeBuddyVersion": "1.0.4",
+  "description": "DSH 原生 Codex 项目与对话、CodeBuddy 与 ZCode CLI 模型适配及本机多 Agent 项目协作。",
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./codebuddy": "./lib/cn/index.js",
+    "./intl": "./lib/intl/index.js",
+    "./client": "./lib/client.js",
+    "./package.json": "./package.json",
+    "./cordis.patch.yml": "./cordis.patch.yml"
+  },
+  "files": [
+    "lib",
+    "docs/codebuddy/cn",
+    "docs/codebuddy/intl",
+    "docs/compatibility",
+    "docs/codebuddy/问题反馈.md",
+    "docs/zcode/LICENSE",
+    "docs/codebuddy/README.md",
+    "docs/codebuddy/README.en.md",
+    "README.md",
+    "README.en.md",
+    "NOTICE.md",
+    "cordis.patch.yml",
+    "docs/agent-hub"
+  ],
+  "engines": {
+    "node": ">=24.9.0",
+    "dsh": "0.2.2-rc.1"
+  },
+  "dependencies": {},
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "^4.0.5",
+    "@deepseek-ai/schemastery": "^3.18.5",
+    "@deepseek-ai/dsh-llm": "0.2.2-rc.1",
+    "@deepseek-ai/dsh-attachment": "0.2.2-rc.1",
+    "@deepseek-ai/dsh-client-locale": "0.2.2-rc.1",
+    "@deepseek-ai/dsh-client-ui-layout": "0.2.2-rc.1",
+    "@deepseek-ai/dsh-client-ui-renderer": "0.2.2-rc.1",
+    "@deepseek-ai/dsh-client-ui-settings": "0.2.2-rc.1",
+    "@deepseek-ai/dsh-client-ui-plugin-manager": "0.2.2-rc.1",
+    "react": "^18.2.0",
+    "@deepseek-ai/dsh-client-ui-workspace": "0.2.2-rc.1",
+    "@deepseek-ai/dsh-client-ui-context-menu": "0.2.2-rc.1"
+  },
+  "devDependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "test": "node --test test/*.test.mjs",
+    "test:cli": "node --test test/cn/*.test.js test/intl/*.test.js",
+    "test:integration": "node scripts/integration.mjs",
+    "test:ui": "node scripts/ui-test.mjs",
+    "package": "npm run build && node scripts/package.mjs",
+    "test:hub-ui": "node scripts/hub-ui-test.mjs"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "inject": [
+        "@deepseek-ai/dsh-client-ui-renderer",
+        "@deepseek-ai/dsh-client-ui-plugin-manager",
+        "@deepseek-ai/dsh-client-ui-settings",
+        "@deepseek-ai/dsh-client-locale",
+        "@deepseek-ai/dsh-client-ui-layout",
+        "@deepseek-ai/dsh-client-ui-workspace",
+        "@deepseek-ai/dsh-client-ui-context-menu"
+      ],
+      "platform": "web"
+    }
+  }
+}

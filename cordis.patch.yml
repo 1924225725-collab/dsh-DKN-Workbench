@@ -1,0 +1,7 @@
+- insert:
+    - id: llm-codebuddy-cli-cn
+      name: dsh-dkn-agent/codebuddy
+    - id: llm-codebuddy-cli-intl
+      name: dsh-dkn-agent/intl
+    - id: dkn-agent-codex
+      name: dsh-dkn-agent

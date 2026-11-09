@@ -1,0 +1,96 @@
+diff --git a/packages/client/ui-workspace/src/client/contract/slots.ts b/packages/client/ui-workspace/src/client/contract/slots.ts
+index edbce796..f9e3e4e5 100644
+--- a/packages/client/ui-workspace/src/client/contract/slots.ts
++++ b/packages/client/ui-workspace/src/client/contract/slots.ts
+@@ -94,6 +94,12 @@ export interface SessionRowOwnerProps {
+   displayTitle: string
+ }
+ 
++/** Display state for plugin sections placed after the native Workspace and Session list. */
++export interface WorkspaceAddonOwnerProps {
++  /** Whether the sidebar is expanded enough to show section labels and rows. */
++  readonly wide: boolean
++}
++
+ /** The row menu's open state as its owner holds it: the `useState` pair. */
+ export type MenuOpenState = readonly [open: boolean, setOpen: (open: boolean) => void]
+ 
+@@ -133,6 +139,8 @@ export interface SessionRowTrailingOwnerProps {
+ 
+ declare module '@deepseek-ai/dsh-client-ui-slots' {
+   interface SlotMap {
++    /** Add-on sections below the native Workspace and Session list. */
++    'sidebar.workspaces.after': { kind: 'list'; scope: 'root'; owner: WorkspaceAddonOwnerProps }
+     /** Directory-flow hole under the conversation empty-state picker (declared by the WorkspacePicker entry). */
+     'conversation.hero.workspace.directoryFlow': { kind: 'single'; scope: 'root'; owner: DirectoryFlowOwnerProps }
+     /** Directory-flow hole under the sidebar browsing region (declared by the WorkspaceBrowser entry). */
+@@ -499,6 +507,7 @@ export type RowToastProps =
+ export type WorkspaceBrowserProps =
+   PropsRuntime<'sidebar.workspaces'>
+   & PropsRenderSlots<
++    | 'sidebar.workspaces.after'
+     | 'sidebar.workspaces.directoryFlow'
+     | 'sidebar.workspaces.session.row.action'
+     | 'sidebar.session.row.trailing'
+diff --git a/packages/client/ui-workspace/src/client/index.ts b/packages/client/ui-workspace/src/client/index.ts
+index ff7890ae..f415c223 100644
+--- a/packages/client/ui-workspace/src/client/index.ts
++++ b/packages/client/ui-workspace/src/client/index.ts
+@@ -331,6 +331,7 @@ export function apply(ctx: Context): void {
+     {
+       name: 'sidebar.workspaces',
+       children: {
++        'sidebar.workspaces.after': { kind: 'list', scope: 'root' },
+         'sidebar.workspaces.directoryFlow': { kind: 'single', scope: 'root' },
+         'sidebar.workspaces.session.row.action': { kind: 'list', scope: 'root' },
+         'sidebar.session.row.leading': { kind: 'list', scope: 'root', inline: true },
+diff --git a/packages/client/ui-workspace/src/client/rows/WorkspaceBrowser.tsx b/packages/client/ui-workspace/src/client/rows/WorkspaceBrowser.tsx
+index 44f3d560..e2e1172a 100644
+--- a/packages/client/ui-workspace/src/client/rows/WorkspaceBrowser.tsx
++++ b/packages/client/ui-workspace/src/client/rows/WorkspaceBrowser.tsx
+@@ -1429,6 +1429,8 @@ export function WorkspaceBrowser({
+             ))}
+       </div>
+ 
++      {renderSlot('sidebar.workspaces.after', { wide })}
++
+       {workspaceActionRequest !== null && <WorkspaceDialogs key={`${workspaceActionRequest.action}/${workspaceActionRequest.workspaceId}`}
+         request={workspaceActionRequest} workspaces={workspaces} renameWorkspace={renameWorkspace} deleteWorkspace={deleteWorkspace}
+         settleWorkspaceAction={settleWorkspaceAction} t={t} />}
+diff --git a/packages/client/ui-workspace/tests/workspace-browser.client.spec.tsx b/packages/client/ui-workspace/tests/workspace-browser.client.spec.tsx
+index 98684432..1033a010 100644
+--- a/packages/client/ui-workspace/tests/workspace-browser.client.spec.tsx
++++ b/packages/client/ui-workspace/tests/workspace-browser.client.spec.tsx
+@@ -16,7 +16,7 @@ import type {
+ import type { SessionId } from '@deepseek-ai/dsh-session/types'
+ import type { MainPanelId } from '@deepseek-ai/dsh-client-ui-layout/client'
+ import { zh as commonZh } from '@deepseek-ai/dsh-client-locale/src/locales/zh.ts'
+-import type { DirectoryFlowOwnerProps, WorkspaceActionRequest, WorkspaceBrowserProps } from '../src/client/contract/slots.ts'
++import type { DirectoryFlowOwnerProps, WorkspaceActionRequest, WorkspaceAddonOwnerProps, WorkspaceBrowserProps } from '../src/client/contract/slots.ts'
+ import { createWorkspaceShortcutControls } from '../src/client/shortcuts.ts'
+ import { createWorkspaceViewStore, FLAT_SESSION_ORDER_KEY } from '../src/client/stores.ts'
+ import { UNGROUPED_KEY } from '../src/client/tree.ts'
+@@ -166,6 +166,23 @@ function rerender(b: ReturnType<typeof mount>, overrides: Partial<WorkspaceBrows
+ }
+ 
+ describe('WorkspaceBrowser', () => {
++  it('renders contributed project sections after the native Session list and reports sidebar width', () => {
++    let received: WorkspaceAddonOwnerProps | undefined
++    const b = mount({ renderSlot: (name, owner) => {
++      if (name === 'sidebar.workspaces.after') {
++        received = owner as WorkspaceAddonOwnerProps
++        return <div data-testid="workspace-addons" />
++      }
++      return renderDirectoryFlowOnly(name, owner)
++    } })
++    const list = b.view.container.querySelector('[class*="listArea"]')!
++    const addons = screen.getByTestId('workspace-addons')
++    expect(list.compareDocumentPosition(addons) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
++    expect(received).toEqual({ wide: true })
++    rerender(b, { wide: false })
++    expect(received).toEqual({ wide: false })
++  })
++
+   it.each(['workspace', 'flat', 'ungrouped'] as const)('keeps %s recency independent of arrival order and saved manual positions', (mode) => {
+     localStorage.clear()
+     const preferences = createWorkspaceViewStore().create()
