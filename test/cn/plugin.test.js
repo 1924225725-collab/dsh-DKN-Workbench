@@ -115,7 +115,8 @@ test('DSH integration discovers all models, forwards selected IDs and efforts, s
   }
   const status = await (await fetch(`${origin}/plugins/dsh-codebuddy-cli-cn/status`)).json()
   assert.equal(status.catalog.models.length, 2)
-  assert.equal(status.pluginVersion, JSON.parse(await readFile(new URL('../../package.json', import.meta.url), 'utf8')).bundledCodeBuddyVersion)
+  assert.equal(status.pluginVersion, JSON.parse(await readFile(new URL('../../package.json', import.meta.url), 'utf8')).version)
+  assert.equal(status.bundledCodeBuddyVersion, JSON.parse(await readFile(new URL('../../package.json', import.meta.url), 'utf8')).bundledCodeBuddyVersion)
   assert.equal(status.timeoutMs, 15000)
   assert.equal(status.responseMode, 'native-json-schema')
   assert.equal(status.usage.lastCall.model, 'future-alpha')

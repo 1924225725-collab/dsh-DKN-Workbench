@@ -37,6 +37,7 @@ process.stdin.on('end', () => {
   if (mode === 'multiple') { send(result); setTimeout(() => send({ ...result, structured_output: { text: 'conflict', toolCalls: [] } }), 40); return }
   if (mode === 'tail') { send(result); process.stdout.write('{broken'); return }
   if (mode === 'string') { send({ ...result, structured_output: JSON.stringify(result.structured_output) }); return }
+  if (mode === 'no-frames') return
   const bytes = Buffer.from(JSON.stringify(result) + '\n')
   const split = bytes.indexOf(Buffer.from('图')) + 1
   process.stdout.write(bytes.subarray(0, split))

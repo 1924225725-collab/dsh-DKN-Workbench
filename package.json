@@ -1,7 +1,7 @@
 {
   "name": "dsh-dkn-agent",
   "displayName": "DKN Agent",
-  "version": "1.9.6",
+  "version": "2.0.2",
   "bundledCodeBuddyVersion": "1.0.4",
   "description": "DSH 原生 Codex 项目与对话、CodeBuddy 与 ZCode CLI 模型适配及本机多 Agent 项目协作。",
   "type": "module",

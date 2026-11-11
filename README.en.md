@@ -1,12 +1,12 @@
 # dsh-DKN-Workbench
 
-DKN Workbench for DSH (formerly DKN Agent) is an integrated workbench plugin for DeepSeek Harness on Windows. Current preview: `1.9.6`, targeting DSH `0.2.2-rc.1`. Includes native Codex projects/conversations, domestic and international CodeBuddy CLI model providers, a ZCode CLI app-server model provider, and an embedded collaboration core extracted from Agent Hub. No gateway, remote cluster or DSH desktop distribution is included.
+DKN Workbench for DSH (formerly DKN Agent) is an integrated workbench plugin for DeepSeek Harness on Windows. Current: `2.0.2`, targeting DSH `0.2.2-rc.1`. Includes native Codex projects/conversations, domestic and international CodeBuddy CLI model providers, a ZCode CLI app-server model provider, and an embedded collaboration core extracted from Agent Hub. No gateway, remote cluster or DSH desktop distribution is included.
 
 [Latest release](https://github.com/1924225725-collab/dsh-DKN-Workbench/releases/latest) · [Standalone CodeBuddy CLI (China)](https://github.com/1924225725-collab/dsh-codebuddy-cli-cn) · [简体中文](README.md)
 
 ## Use
 
-Download `dsh-dkn-agent-1.9.6.tgz` from [GitHub Releases](https://github.com/1924225725-collab/dsh-DKN-Workbench/releases/tag/v1.9.6) and install it in DSH's plugin manager. Open the plugin settings to connect the installed official Codex runtime and configure optional CLI paths. The Codex CLI page also supports executable checks, an explicit model probe, model lists, a default working directory, timeout and reasoning defaults. If the sidebar patch is staged, fully quit DSH, wait approximately 15 seconds, then reopen. Closing to the tray does not release the archive lock.
+Download `dsh-dkn-agent-2.0.2.tgz` from [GitHub Releases](https://github.com/1924225725-collab/dsh-DKN-Workbench/releases) and install it in DSH's plugin manager. Open the plugin settings to connect the installed official Codex runtime and configure optional CLI paths. The Codex CLI page also supports executable checks, an explicit model probe, model lists, a default working directory, timeout and reasoning defaults. If the sidebar patch is staged, fully quit DSH, wait approximately 15 seconds, then reopen. Closing to the tray does not release the archive lock.
 
 DSH workspaces and Codex projects share one scrolling area, separated by a divider and Codex heading. Opening a conversation imports its history and continues the same thread in DSH's native conversation view. Menus support projects, thread rename, archive/restore, reassignment and native sections.
 
@@ -24,12 +24,13 @@ See the [main documentation](README.md) and [collaboration guide](docs/agent-hub
 - Directory scheduling covers plugin collaboration only. External apps may still edit files. Use independent worktrees for parallel editing. Claude tool restrictions are not an OS sandbox; official CLI policies apply.
 - Acknowledgement, runtime completion and acceptance are separate. Uncertain submissions are never retried automatically; reconcile native history first. Stopping scheduling does not itself stop a running native turn.
 - The version-specific adapter backs up and patches matching DSH app.asar. A helper waits for full exit when locked. Unknown versions/layouts, changed digests and unwritable directories fail closed. DSH upgrades may require a plugin update.
+- Codex project sessions list only Codex Agent models (taken from the local model cache, with their reasoning levels); ordinary sessions hide that provider, and already-mapped sessions keep a fallback.
 
-Own data lives at `%LOCALAPPDATA%\dsh-dkn-agent`. The hub subdirectory and exported backups contain collaboration messages, paths, evidence and registered Claude history. No original Agent Hub workspace is automatically imported. Backup import merges records, retains existing IDs, saves a pre-import copy, disables new members' permissions and never resumes work automatically.
+Own data lives at `%LOCALAPPDATA%\dsh-dkn-agent`. The hub subdirectory and exported backups contain collaboration messages, paths, evidence and registered Claude history. Usage figures come from the native runtimes with no unified billing; ZCode reports cached input inside its prompt count, so the plugin subtracts it to stop DSH's disjoint buckets counting the same tokens twice. No original Agent Hub workspace is automatically imported. Backup import merges records, retains existing IDs, saves a pre-import copy, disables new members' permissions and never resumes work automatically.
 
 ## Validation
 
-41 core tests with optional real ASAR enabled, 223 regional CLI tests, isolated official Codex protocol checks with zero model requests, and native-component browser checks with synthetic collaboration replies passed. No real conversations, models or installed DSH were touched. Real-account execution, actual desktop exit patching and live cross-client behavior still require acceptance testing.
+On 2026-11-10 the core suite passed 48 tests with 1 skipped, covering ZCode per-turn usage normalization (cached input counted once) and the Codex project-mode model list with `model`/`effort` forwarding; the built client bundle was verified to carry the per-session model-visibility patch. 41 core tests with optional real ASAR enabled, 223 regional CLI tests, isolated official Codex protocol checks with zero model requests, and native-component browser checks with synthetic collaboration replies passed. No real conversations, models or installed DSH were touched. Real-account execution, actual desktop exit patching and live cross-client behavior still require acceptance testing.
 
 Requires Windows 10/11, DSH `0.2.2-rc.1`, and Node.js `24.9+` for build/CLI environment. Install and sign in to official runtimes separately. The plugin does not install Agent software or manage credentials.
 

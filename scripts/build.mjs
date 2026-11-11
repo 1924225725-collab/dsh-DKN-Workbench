@@ -7,6 +7,8 @@ source=source.replace("id: 'dsh-dkn-codebuddy-cli'", "id: 'dsh-dkn-agent'").repl
 const collaboration=await readFile(new URL('../src/hub-client.js',import.meta.url),'utf8');
 const codex=collaboration+'\n'+(await readFile(new URL('../src/codex-sidebar.js',import.meta.url),'utf8'))+'\n'+(await readFile(new URL('../src/codex-client.js',import.meta.url),'utf8'));
 source=source.replace('    Object.assign(exports, { BUNDLE_NAME, apply, inject, name, createFeedbackKit, IssueFeedback })',()=>codex+'\n    function apply(ctx) { applyCodeBuddy(ctx); applyCodex(ctx) }\n    Object.assign(exports, { BUNDLE_NAME, apply, inject, name, createFeedbackKit, IssueFeedback, CodexSettingsPage, CodexProjectsSection, CollaborationPage })');
+const version=JSON.parse(await readFile(new URL('../package.json',import.meta.url),'utf8')).version;
+source=source.replaceAll('__DKN_AGENT_VERSION__',version);
 new Script(source,{filename:'dsh-dkn-agent/client.js'});
 await writeFile(new URL('../lib/client.js',import.meta.url),source);
 console.log('Built DKN Agent client');

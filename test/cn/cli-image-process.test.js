@@ -79,3 +79,13 @@ test('image error frames classify explicit context-limit and balance statuses sa
     })
   }
 })
+
+test('a stream that closes with no init and no result reports missing-init instead of no-final-result', async () => {
+  await assert.rejects(run('no-frames'), error => {
+    assert.equal(error.code, 'CLI_RESULT_MISSING')
+    assert.equal(error.processDiagnostics.streamReason, 'missing-init')
+    assert.equal(error.processDiagnostics.initCount, 0)
+    assert.equal(error.processDiagnostics.finalResultCount, 0)
+    return true
+  })
+})
