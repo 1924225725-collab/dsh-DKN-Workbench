@@ -1,0 +1,33 @@
+import {createRequire,registerHooks} from 'node:module';
+import {createServer} from 'node:http';
+import {readFile,writeFile,mkdir,mkdtemp,rm} from 'node:fs/promises';
+import {join} from 'node:path';
+import {tmpdir} from 'node:os';
+import assert from 'node:assert/strict';
+import {ApiExportService} from '../lib/api-export-service.js';
+registerHooks({resolve(spec,ctx,next){if(spec==='@deepseek-ai/schemastery')return{url:'data:text/javascript,export default {object:x=>x,string:()=>({description(){return this},default(){return this},volatile(){return this}})}',shortCircuit:true};if(spec==='@deepseek-ai/dsh-llm')return{url:'data:text/javascript,export class LlmAdapter {}',shortCircuit:true};return next(spec,ctx);}});
+const {createHandler}=await import('../lib/index.js');
+const require=createRequire('C:/Users/admin/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright/package.json'),{chromium}=require('playwright');
+const directory=await mkdtemp(join(tmpdir(),'dkn-api-ui-'));
+const apiExport=new ApiExportService({directory,allowEphemeral:true,llm:{listProviders:()=>[{id:'qoder-acp',name:'Qoder'},{id:'zcode-cli',name:'ZCode'}],listModels:async()=>[{id:'test-model',name:'测试模型'}],async *stream(){yield{type:'block-end',block:{type:'text',text:'SYNTHETIC_OK'}};yield{type:'finish',reason:{kind:'stop'}};}}});
+await apiExport.ready;await apiExport.control('save',{port:0});const handler=createHandler({apiExport});
+const [react,dom,client]=await Promise.all(['node_modules/react/umd/react.development.js','node_modules/react-dom/umd/react-dom.development.js','lib/client.js'].map(p=>readFile(p,'utf8')));
+const html=`<!doctype html><meta charset="utf-8"><style>html,body,#app{height:100%;margin:0}body{font:14px Segoe UI,sans-serif;--dsw-alias-bg-layer-1:#17191e;--dsw-alias-bg-layer-2:#202228;--dsw-alias-bg-layer-3:#292b31;--dsw-alias-label-primary:#e7e9ee;--dsw-alias-label-secondary:#a0a6b2;--dsw-alias-border-l4:#454850;color:var(--dsw-alias-label-primary);background:var(--dsw-alias-bg-layer-1)}</style><div id="app"></div><script>${react}</script><script>${dom}</script><script>let api;window.__ModuleLoader__={load(m){api=m.factory(()=>React)}};</script><script>${client.replaceAll('</script','<\\/script')}</script><script>const root=ReactDOM.createRoot(document.getElementById('app'));const ctx={layout:{selectPanel(){root.render(React.createElement('p',null,'返回工作台'))}}};window.showApi=()=>root.render(React.createElement(api.ApiServicePage,{ctx}));window.showApi();</script>`;
+const server=createServer((req,res)=>{if(req.url.startsWith('/plugins/dkn-agent/'))return void handler(req,res);res.writeHead(200,{'Content-Type':'text/html; charset=utf-8'});res.end(html);});await new Promise(r=>server.listen(0,'127.0.0.1',r));
+const browser=await chromium.launch({headless:true,channel:'msedge'}),page=await browser.newPage({viewport:{width:1300,height:1000}}),errors=[];page.on('pageerror',e=>errors.push(e.message));
+try{
+  await page.goto('http://127.0.0.1:'+server.address().port);await page.getByRole('heading',{name:'API 服务',exact:true}).waitFor();
+  await page.getByLabel('导出 qoder-acp/test-model',{exact:true}).waitFor();assert.equal(await page.getByLabel('导出 zcode-cli/test-model',{exact:true}).isDisabled(),true);
+  await page.getByRole('button',{name:'生成 API Key',exact:true}).click();const secret=await page.getByLabel('新 API Key',{exact:true}).inputValue();assert.match(secret,/^dkn_/);assert.equal(await page.getByLabel('新 API Key',{exact:true}).getAttribute('type'),'password');
+  await page.getByLabel('导出 qoder-acp/test-model',{exact:true}).check();await page.getByRole('button',{name:'保存并启动',exact:true}).click();await page.getByRole('button',{name:'停止服务',exact:true}).waitFor();
+  const base=await page.getByLabel('Base URL',{exact:true}).inputValue();const headers={Authorization:'Bearer '+secret,'Content-Type':'application/json'};const response=await fetch(base+'/chat/completions',{method:'POST',headers,body:JSON.stringify({model:'qoder-acp/test-model',messages:[{role:'user',content:'synthetic request'}]})});assert.equal((await response.json()).choices[0].message.content,'SYNTHETIC_OK');
+  await page.getByRole('button',{name:'更换 API Key',exact:true}).click();await page.waitForFunction(previous=>document.querySelector('input[aria-label="新 API Key"]')?.value!==previous,secret);assert.equal((await fetch(base+'/models',{headers})).status,401);
+  await page.getByRole('button',{name:'清除本页明文',exact:true}).click();await page.getByLabel('新 API Key',{exact:true}).waitFor({state:'hidden'});
+  const zrow=page.locator('.dkn-api-model').filter({has:page.getByLabel('导出 zcode-cli/test-model',{exact:true})});await zrow.getByRole('button',{name:'验证',exact:true}).click();await page.getByLabel('导出 zcode-cli/test-model',{exact:true}).waitFor();await page.waitForFunction(()=>!document.querySelector('input[aria-label="导出 zcode-cli/test-model"]').disabled);
+  await mkdir('research/ui',{recursive:true});await page.screenshot({path:'research/ui/api-export-dark.png'});
+  await page.evaluate(()=>{document.body.style.setProperty('--dsw-alias-bg-layer-1','#fff');document.body.style.setProperty('--dsw-alias-bg-layer-2','#f6f7fa');document.body.style.setProperty('--dsw-alias-bg-layer-3','#eef0f3');document.body.style.setProperty('--dsw-alias-label-primary','#202329');document.body.style.setProperty('--dsw-alias-label-secondary','#656b78');document.body.style.setProperty('--dsw-alias-border-l4','#d5d8df');});await page.screenshot({path:'research/ui/api-export-light.png'});
+  await page.setViewportSize({width:460,height:900});assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);await page.screenshot({path:'research/ui/api-export-narrow.png'});
+  await page.getByRole('button',{name:'停止服务',exact:true}).click();await page.getByRole('button',{name:'保存并启动',exact:true}).waitFor();assert.equal(apiExport.snapshot().running,false);
+  await page.getByRole('button',{name:'‹ 返回 DKN Agent',exact:true}).click();await page.getByText('返回工作台',{exact:true}).waitFor();await page.evaluate(()=>window.showApi());await page.getByRole('heading',{name:'API 服务',exact:true}).waitFor();assert.equal(await page.getByLabel('新 API Key',{exact:true}).count(),0);
+  assert.deepEqual(errors,[]);assert.equal((await readFile(join(directory,'settings.json'),'utf8')).includes(secret),false);console.log('API UI passed: one address/key, whitelist, start/stop, key rotation, one-time secret, verification gate, light/dark/narrow. Synthetic model replies only.');
+}finally{await browser.close();await new Promise(r=>server.close(r));await apiExport.close();await rm(directory,{recursive:true,force:true});}

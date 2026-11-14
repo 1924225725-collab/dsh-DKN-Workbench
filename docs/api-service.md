@@ -1,0 +1,39 @@
+# API 服务
+
+在「DKN Agent → API 服务」或 DSH 设置的「API 服务」中启用。整个工作台只导出一个本机地址和一个 API Key，以 model 选择不同平台。需要保持 DSH 运行，退出 DSH 后监听停止。
+
+1. 生成 API Key，立即复制保存。服务端仅保存哈希；离开页面后不再显示原密钥。
+2. 读取模型目录，勾选需要导出的模型，保存设置。可以对具体模型发送短提示验证。ZCode 只有在当前 DSH 运行期间验证成功后才能导出，有效期 30 分钟，重启后需重新验证。
+3. 点击「保存并启动」，复制 Base URL。默认 `http://127.0.0.1:18789/v1`，端口可在停服时修改。
+4. 在调用软件中选择 OpenAI 兼容方式，填写同一个 Base URL 和 Key，选择 `/models` 返回的完整模型 ID。
+
+接口：`GET /v1/models`、`POST /v1/chat/completions`。均要求 `Authorization: Bearer <API Key>`。默认仅本机使用，不开放局域网或公网，也不接受浏览器跨域请求。
+
+PowerShell 调用示例（请替换密钥和模型 ID）：
+
+```powershell
+$apiKey = '<刚复制的 API Key>'
+$body = @{
+  model = 'qoder-acp/qoder-default'
+  messages = @(@{ role = 'user'; content = '你好' })
+  stream = $false
+} | ConvertTo-Json -Depth 6
+Invoke-RestMethod -Uri 'http://127.0.0.1:18789/v1/chat/completions' `
+  -Method Post -Headers @{ Authorization = "Bearer $apiKey" } `
+  -ContentType 'application/json; charset=utf-8' `
+  -Body ([System.Text.Encoding]::UTF8.GetBytes($body))
+```
+
+`stream: true` 返回 SSE，成功结束包含 `finish_reason: stop` 和 `[DONE]`。部分 CLI（包括当前 Codex 命令模式、CodeBuddy 结构化适配）先生成完整回复再返回；不会通过拆字伪造上游流式。流式中途失败会返回 error 事件，没有成功 stop，客户端必须检查 error，不能仅以 HTTP 200 或 `[DONE]` 判断成功。
+
+首版范围：文本 system/user/assistant 消息，JSON/SSE，一次返回一条回复。最后一条需为非空 user 消息。图片、文件、自定义工具调用以及 temperature、max_tokens 等未兼容参数会明确报错，不静默忽略；不伪造 Token 用量和费用。提供方仍使用自己的 CLI 登录态和套餐，不会导出官方账号凭据。Codex 遵循只读沙箱；本入口不执行 API 自定义工具。
+
+可配置最大并发 1–4（默认 1）、超时 1–300 秒（默认 90 秒）。最多另排队 8 条请求，队满返回 429。客户端断开、停止服务、更换 Key 或移除导出模型会取消相关请求。取消不保证平台不计费，不会自动重发。API 请求使用独立会话和临时工作目录，不续接现有项目对话；请求结束后清理工作目录。
+
+「随 DSH 自动启动」默认关闭，需保存才生效。停止服务是停止本次监听，自动启动选项保持用户选择；下次启动 DSH 是否监听取决于该选项。ZCode 尚未重新验证时不会出现在导出目录；如果只有这类模型，自动启动会提示需要验证。
+
+更换 Key 后旧 Key 立即失效，当前请求取消，请同步更新调用软件。最近请求只保存本次进程内的模型、状态和耗时（最多 20 条），不记录提示词、回复和 Key；上游 CLI 仍可能有自身日志。本机 API 设置保存在插件数据目录的 `api-export/settings.json`，密钥只保存 SHA-256 哈希，不可从文件恢复明文。
+
+验证的模型不会自动代表同平台全部模型可用；账号、额度和网络变化仍可能导致上游错误。请使用配置页的真实文字验证。
+
+API 专用的 Codex 请求使用 `--ephemeral`，避免写入正常 Codex 会话历史；需要支持该参数的 Codex CLI。普通 DSH 对话不受这项设置影响。

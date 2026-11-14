@@ -4,6 +4,7 @@ import {readFile,writeFile} from 'node:fs/promises';
 let source=await readFile(new URL('../src/codebuddy-original.js',import.meta.url),'utf8');
 source=source.replace("const inject = ['slots', 'locale', 'configForms', 'layout']","const inject = ['slots', 'locale', 'configForms', 'layout', 'uiWorkspace', 'contextMenus']");
 source=source.replace("id: 'dsh-dkn-codebuddy-cli'", "id: 'dsh-dkn-agent'").replace("const BUNDLE_NAME = 'dsh-dkn-codebuddy-cli'", "const BUNDLE_NAME = 'dsh-dkn-agent'").replace('function apply(ctx) {','function applyCodeBuddy(ctx) {');
+const apiExportClient=await readFile(new URL('../src/api-export-client.js',import.meta.url),'utf8');
 const qoderClient=await readFile(new URL('../src/qoder-client.js',import.meta.url),'utf8');
 const collaboration=await readFile(new URL('../src/hub-client.js',import.meta.url),'utf8');
 const accountPool=await readFile(new URL('../src/account-pool-client.js',import.meta.url),'utf8');
@@ -11,8 +12,8 @@ const providerStatus=await readFile(new URL('../src/provider-status-client.js',i
 const collaborationTools=await readFile(new URL('../src/collaboration-tools-client.js',import.meta.url),'utf8');
 const notices=await readFile(new URL('../src/workbench-notices-client.js',import.meta.url),'utf8');
 const rewards=await readFile(new URL('../src/rewards-client.js',import.meta.url),'utf8');
-const codex=rewards+'\n'+notices+'\n'+collaborationTools+'\n'+providerStatus+'\n'+accountPool+'\n'+qoderClient+'\n'+collaboration+'\n'+(await readFile(new URL('../src/codex-sidebar.js',import.meta.url),'utf8'))+'\n'+(await readFile(new URL('../src/codex-client.js',import.meta.url),'utf8'));
-source=source.replace('    Object.assign(exports, { BUNDLE_NAME, apply, inject, name, createFeedbackKit, IssueFeedback })',()=>codex+'\n    function apply(ctx) { applyCodeBuddy(ctx); applyCodex(ctx) }\n    Object.assign(exports, { BUNDLE_NAME, apply, inject, name, createFeedbackKit, IssueFeedback, CodexSettingsPage, CodexProjectsSection, CollaborationPage, DknSettingsPage, HubSettingsPage, QoderSettingsPage, DknModelsPage, CodexCliSettingsPage, ZcodeSettingsPage, QuotaSettingsPage, QuotaFooterAction, UnifiedSettingsPage, AccountPool, providerAvailability, WorkbenchSupport, WorkbenchUpdateNotice, compactQuota, DailyRewards, CheckinOverview })');
+const codex=apiExportClient+'\n'+rewards+'\n'+notices+'\n'+collaborationTools+'\n'+providerStatus+'\n'+accountPool+'\n'+qoderClient+'\n'+collaboration+'\n'+(await readFile(new URL('../src/codex-sidebar.js',import.meta.url),'utf8'))+'\n'+(await readFile(new URL('../src/codex-client.js',import.meta.url),'utf8'));
+source=source.replace('    Object.assign(exports, { BUNDLE_NAME, apply, inject, name, createFeedbackKit, IssueFeedback })',()=>codex+'\n    function apply(ctx) { applyCodeBuddy(ctx); applyCodex(ctx) }\n    Object.assign(exports, { BUNDLE_NAME, apply, inject, name, createFeedbackKit, IssueFeedback, ApiServicePage, CodexSettingsPage, CodexProjectsSection, CollaborationPage, DknSettingsPage, HubSettingsPage, QoderSettingsPage, DknModelsPage, CodexCliSettingsPage, ZcodeSettingsPage, QuotaSettingsPage, QuotaFooterAction, UnifiedSettingsPage, AccountPool, providerAvailability, WorkbenchSupport, WorkbenchUpdateNotice, compactQuota, DailyRewards, CheckinOverview })');
 const version=JSON.parse(await readFile(new URL('../package.json',import.meta.url),'utf8')).version;
 source=source.replaceAll('__DKN_AGENT_VERSION__',version);
 new Script(source,{filename:'dsh-dkn-agent/client.js'});

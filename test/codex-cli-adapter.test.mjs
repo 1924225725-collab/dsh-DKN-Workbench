@@ -4,6 +4,13 @@ import {mkdtemp,writeFile,rm} from 'node:fs/promises'
 import {tmpdir} from 'node:os'
 import {join} from 'node:path'
 
+test('API-only Codex requests are ephemeral while ordinary requests retain their mode',async()=>{
+  const {CodexCliAdapter}=await import('../lib/codex-cli-adapter.js'),root=await mkdtemp(join(tmpdir(),'dkn-api-codex-')),fake=join(root,'fake.mjs');
+  await writeFile(fake,"process.stdin.resume();process.stdin.on('end',()=>{console.log(JSON.stringify({type:'item.completed',item:{type:'agent_message',text:process.argv.includes('--ephemeral')?'ephemeral':'ordinary'}}));console.log(JSON.stringify({type:'turn.completed'}))})");
+  try{const adapter=new CodexCliAdapter({}, {codexCliPath:fake,codexCliCwd:root});for(const purpose of [undefined,'dkn-api-export']){let answer;for await(const event of adapter.stream({purpose,messages:[{role:'user',content:'synthetic'}]}))if(event.type==='block-end')answer=event.block.text;assert.equal(answer,purpose?'ephemeral':'ordinary');}}
+  finally{await rm(root,{recursive:true,force:true});}
+});
+
 test('Codex CLI adapter uses official exec JSONL shape without sending DSH tools',async()=>{
   const {CodexCliAdapter}=await import('../lib/codex-cli-adapter.js');const root=await mkdtemp(join(tmpdir(),'dkn-codex-cli-'));const fake=join(root,'fake-codex.mjs');await writeFile(fake,"process.stdin.resume();process.stdin.on('end',()=>{console.log(JSON.stringify({type:'item.completed',item:{type:'agent_message',text:'synthetic codex answer'}}));console.log(JSON.stringify({type:'turn.completed',usage:{input_tokens:3,output_tokens:4}}))})");
   try{const adapter=new CodexCliAdapter({agents:{get:()=>({session:{header:{cwd:root}}})}},{codexCliPath:fake,codexCliModel:'fixture-model'});const chunks=[];for await(const chunk of adapter.stream({sessionId:'s',model:'fixture-model',tools:[{name:'dsh_tool'}],messages:[{role:'user',content:'hello'}]}))chunks.push(chunk);assert.equal(chunks.find(v=>v.type==='block-end').block.text,'synthetic codex answer');assert.deepEqual(chunks.find(v=>v.type==='usage').usage,{inputTokens:3,outputTokens:4,cacheReadTokens:0});assert.equal(chunks.at(-1).reason.kind,'stop')}finally{await rm(root,{recursive:true,force:true})}

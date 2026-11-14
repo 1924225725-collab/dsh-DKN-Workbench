@@ -1,6 +1,6 @@
 # dsh-DKN-Workbench
 
-DKN Workbench for DSH (formerly DKN Agent) is an integrated workbench plugin for DeepSeek Harness on Windows. Current: `2.1.8`, targeting DSH `0.2.2-rc.1` / `0.2.2-rc.3`. Includes native Codex projects/conversations, domestic and international CodeBuddy CLI model providers, a ZCode CLI app-server model provider, and an embedded collaboration core extracted from Agent Hub. No gateway, remote cluster or DSH desktop distribution is included.
+DKN Workbench for DSH (formerly DKN Agent) is an integrated workbench plugin for DeepSeek Harness on Windows. Current: `2.1.9`, targeting DSH `0.2.2-rc.1` / `0.2.2-rc.3`. Includes native Codex projects/conversations, domestic and international CodeBuddy CLI model providers, a ZCode CLI app-server model provider, and an embedded collaboration core extracted from Agent Hub. No gateway, remote cluster or DSH desktop distribution is included.
 
 [Latest release](https://github.com/1924225725-collab/dsh-DKN-Workbench/releases/latest) · [Standalone CodeBuddy CLI (China)](https://github.com/1924225725-collab/dsh-codebuddy-cli-cn) · [简体中文](README.md)
 
@@ -94,3 +94,7 @@ Provider entries show availability without conflating executable discovery with 
 ## 2.1.0 settings update
 
 Compact icon/name provider entries, shared settings headers and controls, and a clickable themed usage icon. Codex project settings remain separate from the model-settings launcher. DeepSeek reuses the native DSH account balance service. CodeBuddy reads current CLI account resource packages, Qoder uses official CLI account queries, and ZCode reads Coding Plan or Start Plan quota. Read-only live probes returned CodeBuddy/Qoder quotas and an empty ZCode Start Plan. Local browser fixtures cover provider routes, scoped usage, light/dark themes and narrow windows. This release was not live-tested inside the installed DSH.
+
+### Local API service
+
+Open DKN Agent → API service to generate one key, select an export allowlist and start one loopback endpoint for all selected providers. Supports text Chat Completions JSON/SSE, key rotation, bounded queues and cancellation. ZCode requires current-process verification; project mode is excluded. Disabled by default, binds only 127.0.0.1 and stops when DSH exits. See [API service guide](docs/api-service.md).

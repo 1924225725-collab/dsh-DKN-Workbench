@@ -1,7 +1,7 @@
 {
   "name": "dsh-dkn-agent",
   "displayName": "DKN Agent",
-  "version": "2.1.8",
+  "version": "2.1.9",
   "bundledCodeBuddyVersion": "1.0.4",
   "description": "在 DSH 接入 CodeBuddy、Codex CLI、Qoder ACP 和 ZCode 模型，提供原生 Codex 项目、账号额度、手动每日奖励及项目协作。",
   "type": "module",
@@ -28,7 +28,8 @@
     "NOTICE.md",
     "cordis.patch.yml",
     "docs/agent-hub",
-    "docs/qoder-acp.md"
+    "docs/qoder-acp.md",
+    "docs/api-service.md"
   ],
   "engines": {
     "node": ">=24.9.0",
@@ -63,7 +64,8 @@
     "test:hub-ui": "node scripts/hub-ui-test.mjs",
     "test:qoder-ui": "node scripts/qoder-ui-test.mjs",
     "test:settings-ui": "node scripts/settings-ui-test.mjs",
-    "test:account-pool-ui": "node scripts/account-pool-ui-test.mjs"
+    "test:account-pool-ui": "node scripts/account-pool-ui-test.mjs",
+    "test:api-ui": "node scripts/api-export-ui-test.mjs"
   },
   "dsh": {
     "bundle": {
