@@ -25,7 +25,7 @@ test('one API enforces key/whitelist, hashes its secret and preserves JSON/SSE w
   const second=(await service.control('rotate')).secret;assert.notEqual(second,key);assert.equal((await request()).status,401);assert.equal((await fetch(service.snapshot().baseUrl+'/models',{headers:{Authorization:'Bearer '+second,Origin:'https://foreign.example'}})).status,403);
 }));
 test('unsupported parameters, modalities and non-exported models fail before inference',async()=>fixture(async({request,calls})=>{
-  for(const value of [{...prompt(),temperature:0},{...prompt(),max_tokens:3},{...prompt(),tools:[{type:'function'}]},{...prompt(),messages:[{role:'user',content:[{type:'image_url',image_url:{url:'https://example.com'}}]}]}])assert.equal((await request(value)).status,400);
+  for(const value of [{...prompt(),temperature:0},{...prompt(),max_tokens:0},{...prompt(),tools:[{type:'function'}]},{...prompt(),messages:[{role:'user',content:[{type:'image_url',image_url:{url:'https://example.com'}}]}]}])assert.equal((await request(value)).status,400);
   assert.equal((await request({...prompt(),model:'zcode-cli/test'})).status,404);assert.equal((await request(prompt(),{body:'x'.repeat(130*1024)})).status,413);assert.equal(calls.length,0);
 }));
 test('ZCode requires fresh successful text verification and does not restore stale verification',async()=>fixture(async({service,directory,llm})=>{
@@ -44,6 +44,22 @@ test('errors redact upstream details and timeout bounds an uncooperative iterato
 test('text parts project to text, invalid role/continuation/count reject explicitly',()=>{
   assert.equal(validateApiRequest({...prompt(),messages:[{role:'user',content:[{type:'text',text:'a'},{type:'text',text:'b'}]}]}).messages[0].content[0].text,'a\nb');for(const body of [{...prompt(),n:2},{...prompt(),messages:[{role:'tool',content:'x'}]},{...prompt(),messages:[{role:'assistant',content:'x'}]}])assert.throws(()=>validateApiRequest(body));
 });
+
+test('WorkBuddy CN connectivity request max_tokens=1 is accepted with a bounded SSE response',async()=>fixture(async({request,calls})=>{
+  // Observed in WorkBuddy 5.11.3 main/server.js: testLocalCustomModelConnectivity -> maxOutputTokens=1 -> buildRequest max_tokens=1.
+  const response=await request({model:'qoder-acp/test',messages:[{role:'user',content:'Reply with OK.'}],stream:true,max_tokens:1});assert.equal(response.status,200);
+  const events=(await response.text()).split('\n').filter(line=>line.startsWith('data: {')).map(line=>JSON.parse(line.slice(6)));
+  assert.equal(events.some(event=>event.error),false);const text=events.map(e=>e.choices?.[0]?.delta?.content||'').join('');assert.ok(Buffer.byteLength(text)<=1);assert.equal(events.at(-1).choices[0].finish_reason,'length');assert.equal(calls[0].maxTokens,1);
+}));
+
+test('output budgets keep UTF-8 whole and report length, including an empty bounded response',async()=>fixture(async({request,llm,service})=>{
+  llm.stream=async function*(){yield{type:'block-end',index:0,block:{type:'text',text:'中文回复'}};yield{type:'finish',reason:{kind:'stop'}};};
+  const value=await(await request({...prompt(),max_completion_tokens:3})).json();assert.equal(value.choices[0].message.content,'中');assert.equal(value.choices[0].finish_reason,'length');
+  const empty=await(await request({...prompt(),max_tokens:1})).json();assert.equal(empty.choices[0].message.content,'');assert.equal(empty.choices[0].finish_reason,'length');
+  const sse=await(await request({...prompt(),max_tokens:1,stream:true})).text();assert.match(sse,/event-stream|chat.completion.chunk/);assert.match(sse,/"finish_reason":"length"/);assert.equal(sse.includes('error'),false);
+  assert.equal((await request({...prompt(),max_tokens:1,max_completion_tokens:1})).status,400);
+  assert.ok(service.snapshot().records.some(r=>r.status==='invalid_request_error'&&r.httpStatus===400));
+}));
 
 test('saved autostart reuses the hashed key and port conflicts are recoverable',async()=>fixture(async({service,directory,llm,key})=>{
   await service.control('save',{autoStart:true});const second=new ApiExportService({directory,llm,allowEphemeral:true});
