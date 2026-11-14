@@ -1,6 +1,6 @@
 # dsh-DKN-Workbench
 
-DKN Workbench for DSH (formerly DKN Agent) is an integrated workbench plugin for DeepSeek Harness on Windows. Current: `2.1.4`, targeting DSH `0.2.2-rc.1`. Includes native Codex projects/conversations, domestic and international CodeBuddy CLI model providers, a ZCode CLI app-server model provider, and an embedded collaboration core extracted from Agent Hub. No gateway, remote cluster or DSH desktop distribution is included.
+DKN Workbench for DSH (formerly DKN Agent) is an integrated workbench plugin for DeepSeek Harness on Windows. Current: `2.1.5`, targeting DSH `0.2.2-rc.1`. Includes native Codex projects/conversations, domestic and international CodeBuddy CLI model providers, a ZCode CLI app-server model provider, and an embedded collaboration core extracted from Agent Hub. No gateway, remote cluster or DSH desktop distribution is included.
 
 [Latest release](https://github.com/1924225725-collab/dsh-DKN-Workbench/releases/latest) · [Standalone CodeBuddy CLI (China)](https://github.com/1924225725-collab/dsh-codebuddy-cli-cn) · [简体中文](README.md)
 
@@ -17,7 +17,7 @@ DKN Workbench for DSH (formerly DKN Agent) is an integrated workbench plugin for
 
 Install and sign in to the required official runtimes locally. No platform accounts or free credits are bundled. Project collaboration uses existing DSH workspaces and conversations.
 
-Download `dsh-dkn-agent-2.1.4.tgz` from [GitHub Releases](https://github.com/1924225725-collab/dsh-DKN-Workbench/releases) and install it in DSH's plugin manager. Open the plugin settings to connect the installed official Codex runtime and configure optional CLI paths. The Codex CLI page also supports executable checks, an explicit model probe, model lists, a default working directory, timeout and reasoning defaults. If the sidebar patch is staged, fully quit DSH, wait approximately 15 seconds, then reopen. Closing to the tray does not release the archive lock.
+Download `dsh-dkn-agent-2.1.5.tgz` from [GitHub Releases](https://github.com/1924225725-collab/dsh-DKN-Workbench/releases) and install it in DSH's plugin manager. Open the plugin settings to connect the installed official Codex runtime and configure optional CLI paths. The Codex CLI page also supports executable checks, an explicit model probe, model lists, a default working directory, timeout and reasoning defaults. If the sidebar patch is staged, fully quit DSH, wait approximately 15 seconds, then reopen. Closing to the tray does not release the archive lock.
 
 DSH workspaces and Codex projects share one scrolling area, separated by a divider and Codex heading. Opening a conversation imports its history and continues the same thread in DSH's native conversation view. Menus support projects, thread rename, archive/restore, reassignment and native sections.
 
@@ -58,6 +58,12 @@ Requires Windows 10/11, DSH `0.2.2-rc.1`, and Node.js `24.9+` for build/CLI envi
 Version 2.0.3 adds the official Qoder CLI ACP transport. Open Model Configuration → Qoder (ACP) to inspect the executable, negotiate ACP, read account models, and test a real reply. Text only; each request creates a new session with DSH text history. New tool permission requests are rejected. See [Qoder ACP](docs/qoder-acp.md).
 
 Hub mirrors DSH workspaces and their conversations directly. Each conversation is a member, using its current DSH model. Create and move projects/conversations in DSH; Hub only manages roles, instructions, collaboration permissions, tasks and workflows. Standalone project/member creation and external Agent connections are removed.
+
+## 2.1.5 Qoder daily reward fix
+
+Qoder may omit the daily campaign when a request lacks the official desktop device identity. Queries and manual claims now use the installed, publisher-verified Qoder identity component with the actual local account and machine identity. No replacement device identity is created. Custom/versioned installations are discovered, with an optional desktop path setting.
+
+Missing components are reported as an unavailable client identity rather than no campaign. A real read-only comparison changed from no daily activity to a claimable 100-Credits reward; no real claim was executed during this fix.
 
 ## 2.1.4 top-level check-in status
 

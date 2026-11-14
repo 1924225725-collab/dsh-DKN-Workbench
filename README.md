@@ -1,6 +1,6 @@
 # dsh-DKN-Workbench
 
-DKN 集成工作台是面向 DeepSeek Harness 的 Windows 插件（原名 DKN Agent）。在 DSH 中浏览和继续本机 Codex 项目对话，使用 Codex、CodeBuddy 和 ZCode 的 CLI 模型，通过 Qoder ACP 使用本机账号模型，并按项目组织 Agent 协作。当前为 `2.1.4`，适配 DSH `0.2.2-rc.1`。
+DKN 集成工作台是面向 DeepSeek Harness 的 Windows 插件（原名 DKN Agent）。在 DSH 中浏览和继续本机 Codex 项目对话，使用 Codex、CodeBuddy 和 ZCode 的 CLI 模型，通过 Qoder ACP 使用本机账号模型，并按项目组织 Agent 协作。当前为 `2.1.5`，适配 DSH `0.2.2-rc.1`。
 
 [下载最新版](https://github.com/1924225725-collab/dsh-DKN-Workbench/releases/latest) · [独立 CodeBuddy 版（国内 CLI）](https://github.com/1924225725-collab/dsh-codebuddy-cli-cn) · [English](README.en.md)
 
@@ -17,13 +17,19 @@ DKN 集成工作台是面向 DeepSeek Harness 的 Windows 插件（原名 DKN Ag
 
 模型运行依赖本机已安装、已登录的官方 CLI／运行时，不附带第三方平台账号或免费额度。项目协作直接使用 DSH 工作区和已有对话。
 
-1. 从 [GitHub Releases](https://github.com/1924225725-collab/dsh-DKN-Workbench/releases) 下载 `dsh-dkn-agent-2.1.4.tgz`。在 DSH 插件管理中选择本地安装包并启用；已有旧版可更新同名插件。
+1. 从 [GitHub Releases](https://github.com/1924225725-collab/dsh-DKN-Workbench/releases) 下载 `dsh-dkn-agent-2.1.5.tgz`。在 DSH 插件管理中选择本地安装包并启用；已有旧版可更新同名插件。
 2. 打开“DKN Agent · Codex”设置入口，按需填写官方 Codex CLI 路径；自动发现正常时留空。进入“模型配置 → Codex CLI”后可检测 CLI 版本、发送测试请求、配置模型清单、默认工作目录、调用超时和默认推理强度。模型配置中还提供 ZCode CLI，填写或自动发现 zcode.cjs 后即可使用 ZCode 已登录账号的动态模型目录。
 3. 如果提示侧栏补丁已准备，从应用菜单**完全退出 DSH**，等待约 15 秒再打开。关闭到托盘不会释放归档锁。补丁只支持已核对的 DSH 版本，失败原因显示在设置页。
 4. 工作区与 Codex 项目在**同一滚动区域**：向下滚动，经过分界线和 Codex 标题继续浏览。展开项目并打开对话，使用 DSH 原生对话界面继续。
 5. 左侧点击 **项目协作**，或从 DKN Agent 首页、总设置进入项目协作。自动读取 DSH 工作区项目，项目中的对话自动成为成员；在 DSH 中管理项目和对话，在成员页配置职责与协作权限。
 
 需要 Windows 10/11、DSH `0.2.2-rc.1`，构建和 CLI 环境使用 Node.js `24.9+`。需要哪个运行时，请先自行安装并完成其官方登录。插件不代办登录、不复制凭据、不安装 Agent 软件。
+
+## 2.1.5 Qoder 每日奖励查询修复
+
+修复官方 Qoder 可领取、插件却显示没有每日活动的问题。活动接口在缺少官方桌面设备身份时可能返回不完整列表；现在使用本机已安装 Qoder 桌面端的官方身份组件及真实账号／设备信息重新查询，查询和手动领取使用同一身份，不生成替代设备。
+
+支持自动发现注册表记录的自定义安装目录及版本目录；发现失败时，可在 Qoder 基础配置填写“每日奖励：桌面安装路径”。组件或身份不可用时明确提示原因，不再判为无活动。本机修复前后只读对比已确认：旧请求无活动，新请求显示可领取 100 Credits；本轮未执行真实领取。
 
 ## 2.1.4 顶部签到状态与一键签到
 

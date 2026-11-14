@@ -9,7 +9,7 @@
       },[root,query]);
       React.useEffect(()=>{if(!supported)return;let active=true;const run=async()=>{if(active&&!claiming.current)await refresh()};run();const timer=setInterval(run,60000);window.addEventListener('dkn-rewards-changed',run);return()=>{active=false;clearInterval(timer);window.removeEventListener('dkn-rewards-changed',run)}},[supported,refresh]);
       if(!supported)return provider==='codebuddy'||provider==='zcode'?h('small',{style:{opacity:.65}},provider==='zcode'?'活动领取暂未接入，请在 ZCode 客户端查看活动及验证要求。':'国际版签到尚未验证，暂不开放领取。'):null;
-      const labels={claimable:'可领取',claimed:'当前周期已领取','no-activity':'当前没有下发每日活动','not-eligible':'当前账号不符合资格',expired:'活动已结束','not-started':'活动尚未开始',unavailable:'状态暂无法识别','login-required':'需要登录',error:'查询失败',unknown:'结果待核对'};
+      const labels={claimable:'可领取',claimed:'当前周期已领取','no-activity':'当前没有下发每日活动','not-eligible':'当前账号不符合资格',expired:'活动已结束','not-started':'活动尚未开始',unavailable:'状态暂无法识别','login-required':'需要登录','client-required':'需要官方桌面身份',error:'查询失败',unknown:'结果待核对'};
       const account=provider==='qoder'?'Qoder 国际版桌面账号（可能与 CLI 账号不同）':accountId!==undefined?'此账号的国内版每日签到':'CodeBuddy 国内版当前默认账号';
       const claim=async()=>{
         if(claiming.current)return;claiming.current=true;
@@ -30,7 +30,7 @@
       const targets=[{id:'codebuddy',label:'CodeBuddy 国内',url:'/plugins/dsh-codebuddy-cli-cn/checkin',header:'x-dsh-codebuddy-action'},{id:'qoder',label:'Qoder 国际',url:apiRoot+'qoder/checkin',header:'x-dkn-action'}];
       const [rows,setRows]=React.useState({}),[busy,setBusy]=React.useState(false),[result,setResult]=React.useState('');
       const lock=React.useRef(false),generation=React.useRef(0);
-      const labels={claimable:'可签到',claimed:'当前周期已领取','no-activity':'当前无每日活动','not-eligible':'不符合领取资格',expired:'活动已结束','not-started':'尚未开始','login-required':'需要登录',unavailable:'状态未确认',error:'查询失败',unknown:'结果待核对'};
+      const labels={claimable:'可签到',claimed:'当前周期已领取','no-activity':'当前无每日活动','not-eligible':'不符合领取资格',expired:'活动已结束','not-started':'尚未开始','login-required':'需要登录','client-required':'需要官方桌面身份',unavailable:'状态未确认',error:'查询失败',unknown:'结果待核对'};
       const request=async(target,claim=false)=>{
         try{
           const response=await fetch(target.url,{cache:'no-store',signal:AbortSignal.timeout(claim?60000:30000),...claim?{method:'POST',headers:{'Content-Type':'application/json',[target.header]:'1'},body:JSON.stringify({action:'claim'})}:{}});
