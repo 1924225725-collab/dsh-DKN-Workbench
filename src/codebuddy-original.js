@@ -421,7 +421,7 @@ window.__ModuleLoader__.load({
         && !!value.usage && typeof value.usage.calls === 'number' && !!value.cliCheck && typeof value.cliCheck.state === 'string'
     }
     const sectionStyle = () => ({ border: '1px solid var(--dsw-alias-border-primary, rgba(127,127,127,.25))', borderRadius: 12, padding: 16, display: 'grid', gap: 12 })
-    const inputStyle = () => ({ width: '100%', boxSizing: 'border-box', padding: '8px 10px', borderRadius: 8, border: '1px solid var(--dsw-alias-border-primary, rgba(127,127,127,.35))', background: 'var(--dsw-alias-background-primary, transparent)', color: 'inherit' })
+    const inputStyle = () => ({ width: '100%', boxSizing: 'border-box', padding: '8px 10px', borderRadius: 8, border: '1px solid var(--dsw-alias-border-primary, rgba(127,127,127,.35))', background: 'var(--dsw-alias-bg-layer-1, transparent)', color: 'inherit' })
     const rowStyle = { display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 10 }
     const buttonStyle = { padding: '8px 12px', borderRadius: 8, border: '1px solid rgba(127,127,127,.4)', background: 'transparent', color: 'inherit', cursor: 'pointer' }
     function Notice({ children }) {
@@ -796,7 +796,7 @@ window.__ModuleLoader__.load({
               h('input', { type: 'search', value: eventSearch, 'aria-label': t('feedbackEventSearch'), placeholder: t('feedbackEventSearch'), onChange: e => setEventSearch(e.target.value), style: inputStyle() }),
               h('label', { style: rowStyle }, h('input', { type: 'checkbox', checked: showAllEvents, onChange: e => setShowAllEvents(e.target.checked) }), t('feedbackShowAll')),
               h('button', { type: 'button', disabled: busy, style: buttonStyle, onClick: () => selectEvent(null) }, t('feedbackEventNone')),
-              h('ul', { 'aria-label': t('feedbackEvent'), style: { margin: 0, padding: 0, listStyle: 'none', maxHeight: 280, overflowY: 'auto', border: '1px solid var(--dsw-alias-border-primary, rgba(127,127,127,.4))', borderRadius: 8, background: 'var(--dsw-alias-background-primary, transparent)', color: 'var(--dsw-alias-label-primary, inherit)' } },
+              h('ul', { 'aria-label': t('feedbackEvent'), style: { margin: 0, padding: 0, listStyle: 'none', maxHeight: 280, overflowY: 'auto', border: '1px solid var(--dsw-alias-border-primary, rgba(127,127,127,.4))', borderRadius: 8, background: 'var(--dsw-alias-bg-layer-1, transparent)', color: 'var(--dsw-alias-label-primary, inherit)' } },
                 ...visibleEvents.map(entry => h('li', { key: entry.id }, h('button', { type: 'button', disabled: busy, 'aria-pressed': selectedEvent?.id === entry.id, onClick: () => selectEvent(entry), style: { ...buttonStyle, borderRadius: 0, border: 'none', borderBottom: '1px solid var(--dsw-alias-border-primary, rgba(127,127,127,.2))', width: '100%', textAlign: 'left', display: 'grid', gap: 4, whiteSpace: 'normal', overflowWrap: 'anywhere', color: 'var(--dsw-alias-label-primary, inherit)', background: selectedEvent?.id === entry.id ? 'rgba(59,130,246,.18)' : 'transparent' } },
                   h('span', null, `${entry.at ? new Date(entry.at).toLocaleString() : '?'} · ${entry.model || '?'} · ${entry.errorCode || entry.state}`), h('code', { style: { fontSize: 12 } }, entry.id)))),
                 !visibleEvents.length ? h('li', { style: { padding: 12 } }, t('feedbackNoEvents')) : null))),
@@ -978,6 +978,7 @@ window.__ModuleLoader__.load({
           if (!response.ok || !isStatus(result)) { setNotice(typeof result.message === 'string' ? result.message : t('actionFailed')); return }
           setStatus(result); setConfirmAccountRemoval('')
           if (name === 'add') { setAccountLabel(''); setNotice(t('accountAdded')) }
+          if (name === 'select') setNotice('默认账号已切换，已有对话继续使用原绑定账号。')
           if (name === 'remove') setNotice(t('accountRemoved'))
           if (name === 'prepareLogin') setNotice(t('accountAdded'))
         } catch { setNotice(t('actionFailed')) } finally { setAction('') }
@@ -1093,13 +1094,13 @@ window.__ModuleLoader__.load({
       const setupState = status?.setup?.state
       const cellStyle = { padding: '10px 8px', borderBottom: '1px solid rgba(127,127,127,.2)', textAlign: 'left', verticalAlign: 'top' }
 
-      return h('div', { style: { height: '100%', boxSizing: 'border-box', overflowY: 'auto', padding: 'var(--dsh-frame-top-clearance, 20px) clamp(16px, 3vw, 40px) 32px', color: 'var(--dsw-alias-label-primary, inherit)' } },
+      return h('div', { style: { height: props.embedded ? 'auto' : '100%', boxSizing: 'border-box', overflowY: props.embedded ? 'visible' : 'auto', padding: props.embedded ? '16px 0' : 'var(--dsh-frame-top-clearance, 20px) clamp(16px, 3vw, 40px) 32px', color: 'var(--dsw-alias-label-primary, inherit)' } },
         h('div', { style: { display: 'grid', gap: 20, maxWidth: 1120, margin: '0 auto', minWidth: 0 } },
-        h('header', { style: { display: 'grid', gap: 6 } }, h('h2', { style: { margin: 0 } }, t('title')), h(Notice, null, t('intro')),
+        !props.embedded && h('header', { style: { display: 'grid', gap: 6 } }, h('h2', { style: { margin: 0 } }, t('title')), h(Notice, null, t('intro')),
           status?.pluginVersion ? h(Notice, null, translate(t, 'runtimeVersion', { version: status.pluginVersion, seconds: status.timeoutMs / 1000 })) : null),
         h('div', { style: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 12 } },
           ...[['connection', cliState], ['models', String(models.length)], ['usage', String(status?.usage?.calls ?? 0)]].map(([group, value]) =>
-            h('button', { key: group, type: 'button', onClick: () => setActiveSection(group), style: { ...buttonStyle, padding: 16, textAlign: 'left', display: 'grid', gap: 10, background: 'var(--dsw-alias-background-secondary, rgba(127,127,127,.06))' } },
+            h('button', { key: group, type: 'button', onClick: () => setActiveSection(group), style: { ...buttonStyle, padding: 16, textAlign: 'left', display: 'grid', gap: 10, background: 'var(--dsw-alias-bg-layer-2, rgba(127,127,127,.06))' } },
               h('span', { style: { ...rowStyle, opacity: .8 } }, h(Icon, { kind: group }), t(group === 'connection' ? 'navconnection' : 'metric' + group)),
               h('strong', { style: { fontSize: group === 'connection' ? 14 : 24, overflowWrap: 'anywhere' } }, value)))),
         h('nav', { 'aria-label': t('pageSections'), style: { ...rowStyle, gap: 6, paddingBottom: 8, borderBottom: '1px solid rgba(127,127,127,.2)' } },
@@ -1121,32 +1122,7 @@ window.__ModuleLoader__.load({
                 h('code', { style: { ...inputStyle(), display: 'block', whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' } }, status.loginCommand),
                 h('button', { type: 'button', onClick: copyLogin, style: buttonStyle }, t('copyLogin'))) : null))),
         notice ? h('div', { role: 'status', 'aria-live': 'polite', style: { padding: '0 4px', lineHeight: 1.5, overflowWrap: 'anywhere' } }, notice) : null,
-        status?.accounts ? h(SettingsSection, { active: activeSection, group: 'accounts', style: sectionStyle(), 'aria-label': t('accountsTitle') },
-          h(SectionHeading, { kind: 'accounts' }, t('accountsTitle')),
-          h(Notice, null, t('accountNote')), h(Notice, null, t('accountValidation')),
-          status.accounts.storageError ? h('p', { role: 'alert' }, t('accountStoreError')) : null,
-          !status.accounts.supported ? h(Notice, null, t('accountUnsupported')) : h(React.Fragment, null,
-            h('label', null, t('accountLabel'), h('input', { value: accountLabel, maxLength: 40, style: inputStyle(), onChange: event => setAccountLabel(event.target.value), 'aria-label': t('accountLabel') })),
-            h('div', { style: rowStyle },
-              h('button', { type: 'button', style: buttonStyle, disabled: !!action || dirty || readOnly || !accountLabel.trim() || !!status.accounts.storageError, onClick: () => accountAction('add') }, t('accountAdd')),
-              h('button', { type: 'button', style: buttonStyle, disabled: !!action || dirty || readOnly || status.accounts.selectedId === null || !!status.accounts.storageError, onClick: () => accountAction('select', null) }, t('accountLegacy'))),
-            ...(status.accounts.accounts || []).map(account => h('div', { key: account.id, style: sectionStyle() },
-              h('strong', null, account.label, account.selected ? ` · ${t('accountSelected')}` : ''),
-              h(Notice, null, t(account.pathError ? 'accountPathError' : account.credentialsPresent ? 'accountHasCredential' : 'accountNoCredential')),
-              h(Notice, null, translate(t, 'accountUsage', { calls: account.usage?.calls || 0, input: account.usage?.inputTokens || 0, output: account.usage?.outputTokens || 0, cancelled: account.usage?.cancelledRequests || 0, offloads: account.usage?.imageOffloadRequests || 0, images: account.usage?.offloadImagesRequested || 0, history: account.usage?.historyOffloadedImages || 0 })),
-              h('div', { style: rowStyle },
-                h('button', { type: 'button', style: buttonStyle, disabled: !!action || dirty || readOnly || account.selected || account.pathError, onClick: () => accountAction('select', account.id) }, t('accountUse')),
-                h('button', { type: 'button', style: buttonStyle, disabled: !!action || dirty || readOnly || account.pathError, onClick: () => accountAction('prepareLogin', account.id) }, t('accountPrepare')),
-                h('button', { type: 'button', style: buttonStyle, disabled: !!action || dirty || readOnly || account.selected || account.activeCalls > 0, onClick: () => setConfirmAccountRemoval(account.id) }, t('accountRemove'))),
-              account.loginCommand ? h('div', { style: { display: 'grid', gap: 8 } },
-                h('code', { style: { overflowWrap: 'anywhere' } }, account.loginCommand),
-                h('button', { type: 'button', style: buttonStyle, onClick: async () => { try { await navigator.clipboard.writeText(account.loginCommand); setNotice(t('copied')) } catch { setNotice(t('loginHelp')) } } }, t('copyLogin'))) : null,
-              confirmAccountRemoval === account.id ? h('div', { style: rowStyle },
-                h('button', { type: 'button', style: buttonStyle, disabled: !!action || readOnly, onClick: () => accountAction('remove', account.id) }, t('accountConfirmRemove')),
-                h('button', { type: 'button', style: buttonStyle, onClick: () => setConfirmAccountRemoval('') }, t('accountCancel'))) : null))),
-          h(Notice, null, t('accountPrivacy')),
-          h('details', null, h('summary', { style: { cursor: 'pointer' } }, t('accountGuide')),
-            h(Notice, null, t('accountGuideSteps')), h(Notice, null, t('accountGuideErrors')), h(Notice, null, t('accountRemoved')))) : null,
+        status?.accounts ? h(SettingsSection,{active:activeSection,group:'accounts'},h(AccountPool,{status,statusUrl,active:activeSection==='accounts'&&props.activeRegion!==false,action:accountAction,disabled:!!action||dirty||readOnly||!!status.accounts.storageError,label:accountLabel,setLabel:setAccountLabel,confirmRemoval:confirmAccountRemoval,setConfirmRemoval:setConfirmAccountRemoval})) : null,
         h(SettingsDetails, { active: activeSection, group: 'connection', style: { ...sectionStyle(), display: 'block' }, 'aria-label': t('settings') },
           h('summary', { style: { cursor: 'pointer', fontWeight: 600 } }, t('settings')),
           h('div', { style: { display: 'grid', gap: 12, marginTop: 14 } },
@@ -1259,13 +1235,13 @@ window.__ModuleLoader__.load({
     const inject = ['slots', 'locale', 'configForms', 'layout']
     function UnifiedSettingsPage({ regions, t, ctx }) {
       const [activeRegion, setActiveRegion] = React.useState('cn')
-      return h('div', { style: { height: '100%', display: 'flex', flexDirection: 'column', minHeight: 0 } },
+      return h(ProviderSettingsLayout, {ctx,provider:'codebuddy',rewardRegion:activeRegion},
         h('header', { style: { padding: '16px 24px', borderBottom: '1px solid rgba(127,127,127,.2)', display: 'grid', gap: 8 } },
-          h('button', { type: 'button', onClick: () => ctx?.layout?.selectPanel?.('dkn-agent-models'), style: { justifySelf: 'start' } }, '‹ 返回模型配置'),
+
           h('nav', { 'aria-label': t('regionPicker'), style: rowStyle },
             ...regions.map(region => h('button', { key: region.id, type: 'button', 'aria-pressed': activeRegion === region.id, onClick: () => setActiveRegion(region.id), style: { ...buttonStyle, background: activeRegion === region.id ? 'rgba(59,130,246,.15)' : 'transparent', borderColor: activeRegion === region.id ? '#3b82f6' : 'rgba(127,127,127,.3)' } }, t(region.id)))),
           h(Notice, null, t('regionNote'))),
-        ...regions.map(region => h('div', { key: region.id, hidden: activeRegion !== region.id, 'data-region': region.id, style: { display: activeRegion === region.id ? 'block' : 'none', flex: 1, minHeight: 0 } }, h(CodeBuddySettingsPage, { ...region.props, activeRegion: activeRegion === region.id }))))
+        ...regions.map(region => h('div', { key: region.id, hidden: activeRegion !== region.id, 'data-region': region.id, style: { display: activeRegion === region.id ? 'block' : 'none', flex: 1, minHeight: 0 } }, h(CodeBuddySettingsPage, { ...region.props, embedded:true, activeRegion: activeRegion === region.id }))))
     }
     function CodeBuddySettingsSection({ regions, t, ctx }) { return h(UnifiedSettingsPage, { regions, t, ctx }) }
     function apply(ctx) {

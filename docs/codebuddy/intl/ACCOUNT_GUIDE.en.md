@@ -2,7 +2,7 @@
 
 The account pool gives each International Site account its own CodeBuddy CLI configuration directory and Windows user-directory environment. A model labelled with an environment in DSH stays bound to that environment, including later tool-result and image follow-ups.
 
-The verified scope is limited to Windows and the official npm/Node CodeBuddy CLI `2.174.0 / 2.177.0`. Native executables, other operating systems and other CLI versions cannot use isolated account calls. Default single-account mode remains available. Real dual-account sign-in, token refresh and official billing attribution have not been verified with real accounts.
+The verified scope is limited to Windows and the official npm/Node CodeBuddy CLI `2.174+ stable 2.x`. New versions must pass the required parameter checks. Native executables, other operating systems, prereleases and 3.x cannot use isolated account calls. Default single-account mode remains available. Real dual-account sign-in, token refresh and official billing attribution have not been verified with real accounts.
 
 ## Add and sign in
 
@@ -31,3 +31,5 @@ Settings shows request, input-token and output-token counters for each environme
 The plugin checks only whether a sign-in file exists and is nonempty; it does not read its contents. Sign-in data stays in each isolated environment. Labels, directories and credentials are not placed in model prompts; diagnostic logs use only a random environment ID and do not record labels, directories or sign-in file contents. Logs are never uploaded automatically.
 
 If the account list, an environment directory or a lock file is invalid, isolated account operations stop with an error instead of silently using the default account. An existing lock is treated as another process updating the list; the plugin does not decide whether a lock is stale or take it over.
+
+Version 2.1.1: per-account official credit balances and direct default selection. Official 2.177.0 and 2.181.0 version/help checks passed; live multi-account sign-in, refresh and billing on 2.181.0 remain unverified.

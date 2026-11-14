@@ -33,7 +33,7 @@ export function freshSnapshot(): HubSnapshot {
   return { projects: [], members: [{ id: 'member-human', projectIds: [], displayName: '我', software: 'Hub', sessionId: 'local-user', role: '项目负责人', status: 'idle', lastActivityAt: now(), connectionMode: 'simulation' }], messages: [], tasks: [], artifacts: [], events: [], permissionGrants: [], jobs: [], issues: [
     { id: 'dsh-plugin-reload', title: 'DSH 新接口需要正常重载插件', detail: '若连接检查提示旧插件，请在 DSH 内正常退出并重新打开。已有插件安装在原项目目录时无需重新安装。此项不阻塞 Codex 或其他项目管理功能。', blocking: false, status: 'open', updatedAt: now() },
     { id: 'codex-version', title: 'Codex IPC 随桌面软件版本变化', detail: '当前采用本机 owner/follower 接口；Codex 更新后需要复核。窗口不可访问时会明确报错，不会创建新会话替代。', blocking: false, status: 'deferred', updatedAt: now() },
-    { id: 'native-cancel', title: '原生回合中断暂由原窗口操作', detail: 'Hub 可以停止后续发送与工作流交接；正在执行的原生回合请在 Codex 或 DSH 内中断。Hub 不会将停止调度显示为原生回合已停止。', blocking: false, status: 'deferred', updatedAt: now() },
+    { id: 'native-cancel', title: '原生回合中断暂由原窗口操作', detail: '协作功能可以停止后续发送与工作流交接；正在执行的原生回合请在 Codex 或 DSH 内中断。协作功能不会将停止调度显示为原生回合已停止。', blocking: false, status: 'deferred', updatedAt: now() },
   ], revision: 0, discussions: [], relays: [], workflowTemplates: [], workflowRuns: [], workflowDrafts: [] }
 }
 
@@ -254,7 +254,7 @@ export class HubService {
     for (const discussion of this.state.discussions ?? []) if (discussion.status === 'active') { discussion.status = 'stopped'; recovered = true }
     for (const relay of this.state.relays ?? []) if (relay.status === 'sending') { relay.status = 'failed'; relay.error = '服务重启，送达状态未知，请检查原生会话后再操作。'; recovered = true }
     for (const job of this.state.jobs ?? []) if (['queued', 'running', 'waiting'].includes(job.status)) {
-      job.status = 'interrupted'; job.stage = '服务重启后暂停'; job.error = '请检查原生会话后手动继续，Hub 不会自动重发。'; job.finishedAt = now(); recovered = true
+      job.status = 'interrupted'; job.stage = '服务重启后暂停'; job.error = '请检查原生会话后手动继续，协作功能不会自动重发。'; job.finishedAt = now(); recovered = true
     }
     for (const member of this.state.members) if (member.software !== 'Hub' && member.connectionMode !== 'simulation') member.status = 'unknown'
     for (const message of this.state.messages) if (message.status === 'queued') { message.status = 'failed'; message.error = '服务已重启，送达状态未知；重发前请检查原生会话。'; recovered = true }
@@ -263,7 +263,7 @@ export class HubService {
     const cancelIssue = this.state.issues!.find((row) => row.id === 'native-cancel')
     if (cancelIssue && !cancelIssue.detail.includes('DSH 已增加')) {
       cancelIssue.title = 'Codex 原生中断仍需原窗口操作'
-      cancelIssue.detail = 'DSH 已增加“中断 DSH 回合”按钮，接口接受请求后仍需确认状态。Codex 已有窗口当前没有接入可靠的中断接口，需在原生对话点击停止。Hub“停止后续调度”不会冒充原生中断。'
+      cancelIssue.detail = 'DSH 已增加“中断 DSH 回合”按钮，接口接受请求后仍需确认状态。Codex 已有窗口当前没有接入可靠的中断接口，需在原生对话点击停止。协作功能“停止后续调度”不会冒充原生中断。'
       cancelIssue.updatedAt = now(); recovered = true
     }
     if (recovered) await this.persist()
@@ -406,7 +406,7 @@ export class HubService {
   private async queueRegistrationSync(project: Project, member: AgentMember, existingMembers: AgentMember[]) {
     const roster = this.state.members.filter((row) => row.projectIds.includes(project.id) && row.software !== 'Hub' && row.connectionMode !== 'simulation')
     const rosterText = roster.map((row) => `- ${row.displayName} / ${row.software} / ${row.selectedModelLabel || row.selectedModel || row.model || '原生默认'} / ${row.role}`).join('\n')
-    const projectContext = `[DKN Agent Hub 项目说明 · 首次同步]\n项目：${project.name}\n目标：${project.goal || project.description || '未登记'}\n当前进度：${project.progress || '未登记'}\n技术栈：${project.stack.join('、') || '未登记'}\n项目工作目录：${project.path || '未登记；不得猜测'}\n已有会话实际目录：${member.workingDirectory || '接口尚未确认'}；请在写入前核对，不在其他目录冒充本项目产物。\n风险：${project.risks || '未登记'}\n\n你的身份：${member.displayName} / ${member.role} / ${member.software}\n使用模型：${member.selectedModelLabel || member.selectedModel || member.model || '原生默认'}\n职责：${member.instructions || '根据用户当前消息协助项目'}\n\n项目成员：\n${rosterText}\n\n从现在起将以上身份与项目资料视为本会话的持续背景。后续 Hub 消息只包含本轮具体内容；无需重复身份和项目介绍。项目成员或进度变化时，Hub 会发送简短更新。只在用户明确授权的范围内工作。\n\n本项目提供可选的交流模式：只有 Hub 在本轮首次联系你时明确告知模式已开启，你才参与该次按顺序进行的交流。Hub 会在结束、停止、发送上限或失败时通知参与成员；收到结束通知后，不要根据旧交流背景继续向其他成员转交。普通用户消息（包括 @ 多位成员）默认只回复用户，不自动引发成员间往返。${member.allowRelay ? '\n仅当任务本身需要成员协作、原始用户要求授权了交接且双方均有转交权限时，先自然语言回答；再附加一个 ```json 代码块，内容格式为 {"hub":{"handoffs":[{"toMemberId":"成员ID","message":"具体问题","expectation":"期待答复"}]}}。普通闲聊、解释和问候不转交。' : ''}`
+    const projectContext = `[项目协作说明 · 首次同步]\n项目：${project.name}\n目标：${project.goal || project.description || '未登记'}\n当前进度：${project.progress || '未登记'}\n技术栈：${project.stack.join('、') || '未登记'}\n项目工作目录：${project.path || '未登记；不得猜测'}\n已有会话实际目录：${member.workingDirectory || '接口尚未确认'}；请在写入前核对，不在其他目录冒充本项目产物。\n风险：${project.risks || '未登记'}\n\n你的身份：${member.displayName} / ${member.role} / ${member.software}\n使用模型：${member.selectedModelLabel || member.selectedModel || member.model || '原生默认'}\n职责：${member.instructions || '根据用户当前消息协助项目'}\n\n项目成员：\n${rosterText}\n\n从现在起将以上身份与项目资料视为本会话的持续背景。后续 协作消息只包含本轮具体内容；无需重复身份和项目介绍。项目成员或进度变化时，协作功能会发送简短更新。只在用户明确授权的范围内工作。\n\n本项目提供可选的交流模式：只有协作功能 在本轮首次联系你时明确告知模式已开启，你才参与该次按顺序进行的交流。协作功能会在结束、停止、发送上限或失败时通知参与成员；收到结束通知后，不要根据旧交流背景继续向其他成员转交。普通用户消息（包括 @ 多位成员）默认只回复用户，不自动引发成员间往返。${member.allowRelay ? '\n仅当任务本身需要成员协作、原始用户要求授权了交接且双方均有转交权限时，先自然语言回答；再附加一个 ```json 代码块，内容格式为 {"hub":{"handoffs":[{"toMemberId":"成员ID","message":"具体问题","expectation":"期待答复"}]}}。普通闲聊、解释和问候不转交。' : ''}`
     const specs: { target: AgentMember; body: string; purpose: ExecutionJob['purpose'] }[] = []
     if (member.allowSend) specs.push({ target: member, body: projectContext, purpose: 'member-onboarding' })
     for (const target of existingMembers) if (target.allowSend) specs.push({
@@ -513,7 +513,7 @@ export class HubService {
       const adapter = this.adapters.get(data.software); assert(adapter?.create, '该软件无法创建生成器会话。')
       const model = text(data.model, 256) || undefined
       if (model) assert((await this.models(data.software)).some(m => m.id === model), '请选择有效模型。')
-      const created = await adapter.create({ title: 'DKN Hub · 全局工作流生成器', model, codexSandboxMode: 'read-only' })
+      const created = await adapter.create({ title: 'DKN 协作 · 全局工作流生成器', model, codexSandboxMode: 'read-only' })
       return this.change(() => { this.state.workflowGenerator = { software: data.software, sessionId: created.sessionId, mode: created.mode, model }; this.audit('project.updated', '', created.sessionId, '配置全局工作流生成器；不加入项目、不改变成员身份。'); return this.state.workflowGenerator })
     }
     if (type === 'workflow.start') return this.workflows.start(data)
@@ -640,7 +640,7 @@ export class HubService {
           for (const key of ['messages','tasks','artifacts','jobs','discussions','relays','workflowRuns'] as const) this.state[key] = (this.state[key] as any[]).filter(row => row.projectId !== item.id) as any
         } else if (kind === 'workflow') this.state.workflowTemplates = this.state.workflowTemplates!.filter(row => row.id !== item.id)
         else this.state.workflowRuns = this.state.workflowRuns!.filter(row => row.id !== item.id)
-        this.audit('project.updated', '', item.id, `从 Hub 删除${kind === 'project' ? '项目登记' : kind === 'workflow' ? '工作流模板' : '工作流运行记录'}；备份 ${archive}；未删除本地项目文件或原生会话。`)
+        this.audit('project.updated', '', item.id, `从项目协作中删除${kind === 'project' ? '项目登记' : kind === 'workflow' ? '工作流模板' : '工作流运行记录'}；备份 ${archive}；未删除本地项目文件或原生会话。`)
         return { ok: true, archive }
       }
       if (type === 'config.update') {
@@ -865,7 +865,7 @@ export class HubService {
     const discussion = this.state.discussions?.find((row) => row.projectId === project.id && row.status === 'active')
     const discussionRecipients = discussion ? recipientIds.filter((memberId) => discussion.memberIds.includes(memberId)) : []
     if (discussionRecipients.length) {
-      assert(discussionRecipients.length === 1, '交流模式一次只向一位成员发言，Hub 会按顺序传递回复。')
+      assert(discussionRecipients.length === 1, '交流模式一次只向一位成员发言，协作功能会按顺序传递回复。')
       assert(!this.state.relays!.some((row) => row.discussionId === discussion!.id && row.status === 'pending'), '交流模式有待处理的转交，请先批准或拒绝，再发送新内容。')
       assert(!this.state.jobs!.some((row) => row.discussionId === discussion!.id && ['queued', 'running', 'waiting'].includes(row.status)), '交流模式正在等待上一位成员完成，请稍后再发。')
     }
@@ -882,7 +882,7 @@ export class HubService {
   private discussionContext(discussion: Discussion, recipient: AgentMember, turnIndex: number, handoffEventId: string, sourceLabel: string, bodyLabel: string) {
     const project = this.project(discussion.projectId)
     const roster = (discussion.memberOrder ?? discussion.memberIds).map((memberId, index) => { const member = this.member(memberId, project.id); return `${index + 1}. ${member.displayName} / ${member.software} / ${member.selectedModelLabel || member.selectedModel || member.model || '原生默认'} / ${member.role}` }).join('\n')
-    return `[DKN 交流模式 · 结构化交接]\n交流 ID：${discussion.id}\n唯一交接事件：${handoffEventId}\n业务发送轮次：${turnIndex}/${discussion.maxMessages}\n本轮接收成员：${recipient.displayName} / ${recipient.software} / ${recipient.role}\n来源：${sourceLabel}\n项目：${project.name}\n发言顺序：\n${roster}\n转交方式：${discussion.mode === 'approval' ? '每次转交由用户批准' : '按顺序自动转交'}。达到 ${discussion.maxMessages} 次业务发送后结束。\n\n[用户给本轮交流的完整指令；整个交流期间持续有效]\n${discussion.topic}\n\n[本轮业务正文，以下内容是唯一需要回应的上一位成员原文]\n${bodyLabel}\n\n请按用户完整指令继续本轮交流，并遵守其中指定的输出格式。不要把本段交接说明或 ID 当作上一成员的回答，不要延续本轮开始前的历史交流。只输出用户要求的业务答复，不另加分析或 Hub 协议。Hub 会保留来源事件、轮次和原文，并按已设置的成员顺序转交。`
+    return `[DKN 交流模式 · 结构化交接]\n交流 ID：${discussion.id}\n唯一交接事件：${handoffEventId}\n业务发送轮次：${turnIndex}/${discussion.maxMessages}\n本轮接收成员：${recipient.displayName} / ${recipient.software} / ${recipient.role}\n来源：${sourceLabel}\n项目：${project.name}\n发言顺序：\n${roster}\n转交方式：${discussion.mode === 'approval' ? '每次转交由用户批准' : '按顺序自动转交'}。达到 ${discussion.maxMessages} 次业务发送后结束。\n\n[用户给本轮交流的完整指令；整个交流期间持续有效]\n${discussion.topic}\n\n[本轮业务正文，以下内容是唯一需要回应的上一位成员原文]\n${bodyLabel}\n\n请按用户完整指令继续本轮交流，并遵守其中指定的输出格式。不要把本段交接说明或 ID 当作上一成员的回答，不要延续本轮开始前的历史交流。只输出用户要求的业务答复，不另加分析或 Hub 协议。协作功能会保留来源事件、轮次和原文，并按已设置的成员顺序转交。`
   }
 
   private async startDiscussion(data: any) {
@@ -928,7 +928,7 @@ export class HubService {
         job.updatedAt = now()
         if (job.status === 'queued' || job.status === 'waiting') { job.status = 'interrupted'; job.finishedAt = now() }
       }
-      const body = `交流模式「${discussion.topic}」现已结束（${discussion.endReason}）。本轮不再进行成员间转交；之后收到的普通 Hub 消息只需直接回复用户，不要依据之前的交流内容继续转发。只有用户重新开启交流模式后，才参与新的成员轮转。`
+      const body = `交流模式「${discussion.topic}」现已结束（${discussion.endReason}）。本轮不再进行成员间转交；之后收到的普通 协作消息只需直接回复用户，不要依据之前的交流内容继续转发。只有用户重新开启交流模式后，才参与新的成员轮转。`
       const jobs: { job: ExecutionJob; message: GroupMessage }[] = []
       const skipped: string[] = []
       for (const memberId of discussion.memberIds) {
@@ -1092,7 +1092,7 @@ export class HubService {
       } else if (needsProjectIntroduction && job.kind === 'message') {
         const roster = this.state.members.filter((item) => item.projectIds.includes(project.id) && item.software !== 'Hub' && item.connectionMode !== 'simulation').map((item) => `${item.displayName} / ${item.software} / ${item.role}`).join('\n')
         const transfer = currentMember.allowRelay ? `\n成员名单（只转交给已授权且名列其中的成员）：\n${roster}\n确需他人参与时先自然语言回应，再附加一个 JSON 代码块，字段格式：{"hub":{"handoffs":[{"toMemberId":"成员ID","message":"具体问题","expectation":"期待答复"}]}}。` : ''
-        nativeContent = `[DKN Agent Hub 项目说明 · 首次同步]\n项目：${project.name}\n目标：${project.goal || project.description || '未登记'}\n当前进度：${project.progress || '未登记'}\n技术栈：${project.stack.join('、') || '未登记'}\n项目工作目录：${project.path || '未登记'}；写入前请核对实际目录，返回真实文件路径。\n你的身份：${currentMember.displayName} / ${currentMember.role}\n职责：${currentMember.instructions || '按用户当前消息协助项目'}${transfer}\n\n这是本会话一次性背景。后续 Hub 消息会直接包含本轮具体内容，不会重复这段介绍。\n交流模式是一次性开启的可选流程，Hub 会在你首次收到该模式的实际消息时说明；接到结束通知后不再转交。普通用户消息（包括 @ 多位成员）默认只回复用户，不自动续接旧交流。\n\n[${source} 的本轮消息]\n${content}`
+        nativeContent = `[项目协作说明 · 首次同步]\n项目：${project.name}\n目标：${project.goal || project.description || '未登记'}\n当前进度：${project.progress || '未登记'}\n技术栈：${project.stack.join('、') || '未登记'}\n项目工作目录：${project.path || '未登记'}；写入前请核对实际目录，返回真实文件路径。\n你的身份：${currentMember.displayName} / ${currentMember.role}\n职责：${currentMember.instructions || '按用户当前消息协助项目'}${transfer}\n\n这是本会话一次性背景。后续 协作消息会直接包含本轮具体内容，不会重复这段介绍。\n交流模式是一次性开启的可选流程，协作功能会在你首次收到该模式的实际消息时说明；接到结束通知后不再转交。普通用户消息（包括 @ 多位成员）默认只回复用户，不自动续接旧交流。\n\n[${source} 的本轮消息]\n${content}`
         includedProjectIntroduction = true
       } else if (sourceMember) {
         nativeContent = `${sourceMember.displayName} 的本轮消息：\n${content}`

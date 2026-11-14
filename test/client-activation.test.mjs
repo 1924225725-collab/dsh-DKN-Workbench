@@ -40,10 +40,11 @@ test('built client activates and unloads under the real DSH Cordis framework',{s
   });
   const ctx=new cordis.Context();
   const noop=()=>{};
+  const registrations=[];
   const original=()=>{};
   const resolver={directoryFor:original};
   for(const [key,value] of Object.entries({
-    slots:{inject:(_name,fn)=>fn(),register:()=>noop},
+    slots:{inject:(_name,fn)=>fn(),register:entry=>{registrations.push(entry);return noop;}},
     locale:{register:()=>noop,bind:()=>key=>key},
     configForms:{get:()=>({}),whileServed:(_names,fn)=>fn()},
     layout:{panelInfo:{getSnapshot:()=>({activePanelId:null})},selectPanel:noop},
@@ -52,6 +53,7 @@ test('built client activates and unloads under the real DSH Cordis framework',{s
   const fiber=await ctx.plugin(api);
   await new Promise(resolve=>setImmediate(resolve));
   assert.equal(resolver.directoryFor.__dknIsolation,true);
+  for(const name of ['main','sidebar.panellist','settings.section'])assert.ok(registrations.some(entry=>entry.name===name&&(entry.key||entry.id)==='dkn-agent-collaboration'),name+' exposes collaboration');
   await fiber.dispose();
   assert.equal(resolver.directoryFor,original);
 });

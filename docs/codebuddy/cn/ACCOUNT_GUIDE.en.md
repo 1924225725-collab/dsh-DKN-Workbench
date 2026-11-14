@@ -2,7 +2,7 @@
 
 This preview feature implements isolated environments and account-bound model routing. Directory isolation, synthetic routing and existing automated regressions passed. Real two-account sign-in persistence, token refresh and billing attribution still require user acceptance. This feature is not marked production-ready.
 
-Supported for this feature: Windows, official **npm/Node** CodeBuddy CLI **2.174.0 / 2.177.0**, DSH **0.2.1-rc.2 / rc.3 / rc.4 / rc.5**. Native executables and other CLI versions are blocked in account mode until verified. Existing default sign-in behavior remains available.
+Supported for this feature: Windows, official **npm/Node** CodeBuddy CLI **2.174+ stable 2.x**, DSH **0.2.1-rc.2 / rc.3 / rc.4 / rc.5**. New versions must pass the required parameter checks. Native executables, prereleases and 3.x are blocked in account mode. Existing default sign-in behavior remains available.
 
 ## Setup
 
@@ -36,7 +36,7 @@ Metadata is stored under `%LOCALAPPDATA%\dsh-codebuddy-cli-cn\accounts\index.jso
 | --- | --- |
 | ACCOUNT_LOGIN_REQUIRED | Complete the entry's official sign-in flow, then refresh models. |
 | CLI_AUTH_REQUIRED / 401 | Reauthenticate through official `/login` in that environment. A file may exist but be expired. |
-| ACCOUNT_CLI_UNVERIFIED | Account mode requires the verified CLI 2.174.0 / 2.177.0. Wait for adaptation or return to default mode. |
+| ACCOUNT_CLI_UNVERIFIED | Account mode requires the verified CLI 2.174+ stable 2.x. Wait for adaptation or return to default mode. |
 | ACCOUNT_CLI_RUNTIME_UNVERIFIED | Use the official npm package and select its codebuddy.cmd in advanced settings. Native executables and other entrypoints have not been verified. The plugin does not replace your CLI automatically. |
 | ACCOUNT_MODEL_REQUIRED | Explicitly choose the intended labelled model in DSH. |
 | ACCOUNT_NOT_FOUND | The original environment was removed from the list. Select a target model explicitly. |
@@ -45,3 +45,5 @@ Metadata is stored under `%LOCALAPPDATA%\dsh-codebuddy-cli-cn\accounts\index.jso
 | ACCOUNT_STORE_INVALID / BUSY | Retry later or report the metadata/lock issue without sharing credentials. Do not delete login directories to force a fallback. |
 
 The plugin delegates login, credential refresh and model calls to the official CLI. Independent environments do not establish separate official authorization for an account pool. Real account and billing behavior remains subject to acceptance testing.
+
+Version 2.1.1: per-account official credit balances and direct default selection. Official 2.177.0 and 2.181.0 version/help checks passed; live multi-account sign-in, refresh and billing on 2.181.0 remain unverified.
