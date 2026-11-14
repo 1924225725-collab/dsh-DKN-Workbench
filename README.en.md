@@ -1,6 +1,6 @@
 # dsh-DKN-Workbench
 
-DKN Workbench for DSH (formerly DKN Agent) is an integrated workbench plugin for DeepSeek Harness on Windows. Current: `2.1.6`, targeting DSH `0.2.2-rc.1` / `0.2.2-rc.3`. Includes native Codex projects/conversations, domestic and international CodeBuddy CLI model providers, a ZCode CLI app-server model provider, and an embedded collaboration core extracted from Agent Hub. No gateway, remote cluster or DSH desktop distribution is included.
+DKN Workbench for DSH (formerly DKN Agent) is an integrated workbench plugin for DeepSeek Harness on Windows. Current: `2.1.7`, targeting DSH `0.2.2-rc.1` / `0.2.2-rc.3`. Includes native Codex projects/conversations, domestic and international CodeBuddy CLI model providers, a ZCode CLI app-server model provider, and an embedded collaboration core extracted from Agent Hub. No gateway, remote cluster or DSH desktop distribution is included.
 
 [Latest release](https://github.com/1924225725-collab/dsh-DKN-Workbench/releases/latest) · [Standalone CodeBuddy CLI (China)](https://github.com/1924225725-collab/dsh-codebuddy-cli-cn) · [简体中文](README.md)
 

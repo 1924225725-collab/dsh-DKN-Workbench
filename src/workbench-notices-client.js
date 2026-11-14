@@ -1,6 +1,21 @@
     const DKN_REPOSITORY='https://github.com/1924225725-collab/dsh-DKN-Workbench';
     let dknThanksShown=false,dknUpdateShown=false;
     let dknUpdatePromise;
+    let dknPatchShown=false;
+    function WorkbenchPatchNotice(){
+      const [patch,setPatch]=React.useState(null);
+      React.useEffect(()=>{
+        const key='dkn-workbench:sidebar-install-notice';
+        if(dknPatchShown)return;
+        try{if(localStorage.getItem(key)==='shown'){dknPatchShown=true;return;}}catch{}
+        let active=true,attempts=0,timer;
+        const check=async()=>{try{const state=await codexApi('state'),value=state.sidebarPatch;if(!active)return;if(value?.status&&value.status!=='checking'&&!dknPatchShown){dknPatchShown=true;try{localStorage.setItem(key,'shown');}catch{}setPatch(value);return;}}catch{}if(active&&++attempts<20)timer=setTimeout(check,1500);};
+        check();return()=>{active=false;clearTimeout(timer);};
+      },[]);
+      if(!patch)return null;
+      const ready=patch.status==='ready';
+      return h(WorkbenchModal,{title:'首次安装：Codex 侧栏适配',onClose:()=>setPatch(null)},h('p',{style:{margin:0,lineHeight:1.7}},ready?'Codex 侧栏适配已完成。连接本机 Codex 后，可在侧栏查看项目和对话。':'Codex 项目列表需要一次侧栏适配。若提示补丁已准备或需要重启，请从托盘完全退出 DSH，等待约 15 秒再打开；无需退出 Codex。'),h('p',{style:{margin:0,lineHeight:1.7,opacity:.75}},'这条说明仅首次安装显示。适配进度和异常可随时在 Codex 项目模式配置页查看；侧栏未就绪时也可使用配置页中的项目列表。'),settingsControl('button',{type:'button',onClick:()=>setPatch(null)},'知道了'));
+    }
     const externalLink=(label,url)=>h('a',{href:url,target:'_blank',rel:'noopener noreferrer',style:{...entryButtonStyle,display:'inline-flex',textDecoration:'none'}},label);
     function WorkbenchModal({title,onClose,children}){
       const closeRef=React.useRef();

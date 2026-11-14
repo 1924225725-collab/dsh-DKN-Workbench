@@ -1,7 +1,7 @@
 {
   "name": "dsh-dkn-agent",
   "displayName": "DKN Agent",
-  "version": "2.1.6",
+  "version": "2.1.7",
   "bundledCodeBuddyVersion": "1.0.4",
   "description": "在 DSH 接入 CodeBuddy、Codex CLI、Qoder ACP 和 ZCode 模型，提供原生 Codex 项目、账号额度、手动每日奖励及项目协作。",
   "type": "module",
