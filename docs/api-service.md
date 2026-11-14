@@ -1,20 +1,24 @@
 # API 服务
 
-在「DKN Agent → API 服务」或 DSH 设置的「API 服务」中启用。整个工作台只导出一个本机地址和一个 API Key，以 model 选择不同平台。需要保持 DSH 运行，退出 DSH 后监听停止。
+在「DKN Agent → API 服务」或 DSH 设置的「API 服务」中启用。对外统一提供一个本机地址、一个 API Key、一个模型名（默认 `dkn`）。实际调用的平台及模型在插件的「模型路由」中选择。需要保持 DSH 运行，退出 DSH 后监听停止。
 
 1. 生成 API Key，立即复制保存。服务端仅保存哈希；离开页面后不再显示原密钥。
-2. 读取模型目录，勾选需要导出的模型，保存设置。可以对具体模型发送短提示验证。ZCode 只有在当前 DSH 运行期间验证成功后才能导出，有效期 30 分钟，重启后需重新验证。
+2. 读取模型目录，单选实际调用的模型，点击「保存模型路由」。对外模型名可以自定义。可以对具体模型发送短提示验证。ZCode 只有在当前 DSH 运行期间验证成功后才能使用，有效期 30 分钟，重启后需重新验证。
 3. 点击「保存并启动」，复制 Base URL。默认 `http://127.0.0.1:18789/v1`，端口可在停服时修改。
-4. 在调用软件中选择 OpenAI 兼容方式，填写同一个 Base URL 和 Key，选择 `/models` 返回的完整模型 ID。
+4. 在调用软件中选择 OpenAI 兼容方式，填写同一个 Base URL 和 Key，模型名填写 `dkn`（或已保存的自定义名称）。以后只需在插件里切换目标模型，调用软件无需修改。`GET /models` 和 JSON/SSE 回复都只显示这个对外名称，不暴露内部模型 ID。
+
+升级到 2.2.1 时保留地址、Key 和原选择的第一个模型作为后台目标；旧的平台/模型 ID 不再接受，请在调用软件中将模型名改为 `dkn`。切换目标会取消旧目标上的在途请求，不会自动重发。目标不可用或 ZCode 验证失效时返回明确错误，不自动切换到其他平台；此时 `/models` 返回空列表。
 
 接口：`GET /v1/models`、`POST /v1/chat/completions`。均要求 `Authorization: Bearer <API Key>`。默认仅本机使用，不开放局域网或公网，也不接受浏览器跨域请求。
+
+2.2.2 起，单次 JSON 请求体上限由 128 KiB 提升到 **16 MiB**（按 UTF-8 字节计算，包含全部历史、上下文和协议字段）。超限返回明确的 HTTP 413，不静默截断消息；这个接入上限不代表实际模型的上下文容量，提供方仍有自身限制。
 
 PowerShell 调用示例（请替换密钥和模型 ID）：
 
 ```powershell
 $apiKey = '<刚复制的 API Key>'
 $body = @{
-  model = 'qoder-acp/qoder-default'
+  model = 'dkn'
   messages = @(@{ role = 'user'; content = '你好' })
   stream = $false
 } | ConvertTo-Json -Depth 6
@@ -42,4 +46,4 @@ API 专用的 Codex 请求使用 `--ephemeral`，避免写入正常 Codex 会话
 
 WorkBuddy 的测试连接会固定发送 max_tokens: 1。2.2.0 起接受正整数 max_tokens 或 max_completion_tokens（只能选一个，1–131072）。该预算会传递给适配器；对于不能精确控制生成 Token 的 CLI，网关按同值的 UTF-8 字节上限保守截断输出，保持 Unicode 完整，触及预算时取消上游并返回 finish_reason: length。它不代表精确 Token 计数，不保证约束上游已生成的 Token 或费用；短探测可能仅收到一个字母，仍是实际模型返回内容，不会伪造 OK。
 
-WorkBuddy 的自定义模型供应商选择 OpenAI 兼容方式，URL 填 API 服务的 Base URL，Key 填完整的新生成密钥，模型 ID 完整复制导出目录。首版请不要开启工具调用或图片能力。被拒绝的请求现在也记录 HTTP 状态及错误分类，便于区别密钥、模型白名单和参数问题，不记录请求内容或 Key。
+WorkBuddy 的自定义模型供应商选择 OpenAI 兼容方式，URL 填 API 服务的 Base URL，Key 填生成的密钥，模型名填 `dkn`（或已保存的自定义名称）。首版请不要开启工具调用或图片能力。被拒绝的请求记录 HTTP 状态及错误分类，便于区别密钥、模型路由和参数问题，不记录请求内容或 Key。
