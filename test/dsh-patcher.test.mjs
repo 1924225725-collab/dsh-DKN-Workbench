@@ -9,7 +9,7 @@ import {createRequire} from 'node:module';
 import {Script} from 'node:vm';
 import {execFile} from 'node:child_process';
 import {promisify} from 'node:util';
-import {ensureDshSidebarPatch} from '../lib/dsh-sidebar-patcher.js';
+import {ensureDshSidebarPatch,patchDshWorkspaceClient} from '../lib/dsh-sidebar-patcher.js';
 
 function fakeAsar(){
   return{
@@ -20,6 +20,39 @@ function fakeAsar(){
   };
 }
 
+const rc3Client='const slots={children:{"sidebar.workspaces.directoryFlow":{}}};function view(){return jsx("div",{ref:wide?bindScrollerRef:void 0,className:WorkspaceBrowser_module_css_default.listArea,"data-sidebar-list-area":``,children:wide&&(jsx(SessionTree,{home,t}))}),workspaceActionRequest!==null&&null}';
+
+test('rc3 keeps the native scroll reference and installs one idempotent sidebar slot',()=>{
+  const patched=patchDshWorkspaceClient('0.2.2-rc.3',rc3Client);
+  assert.ok(patched);
+  new Script(patched);
+  assert.match(patched,/ref:wide\?bindScrollerRef:void 0/);
+  assert.match(patched,/children:\[wide&&/);
+  assert.match(patched,/nativeAppearance:\{browser:.*ProjectRowItem/);
+  assert.equal(patched.split('"sidebar.workspaces.after":').length-1,1);
+  assert.equal(patched.split('renderSlot("sidebar.workspaces.after"').length-1,1);
+  assert.equal(patchDshWorkspaceClient('0.2.2-rc.3',patched),patched);
+});
+
+test('rc3 rejects changed or partially patched layouts instead of guessing',()=>{
+  assert.equal(patchDshWorkspaceClient('0.2.2-rc.3',rc3Client.replace('bindScrollerRef','otherRef')),undefined);
+  assert.equal(patchDshWorkspaceClient('0.2.2-rc.3',rc3Client+';const partial={"sidebar.workspaces.after":{}}'),undefined);
+  assert.equal(patchDshWorkspaceClient('0.2.2-rc.4',rc3Client),undefined);
+});
+
+test('rc3 archive upgrade preserves a backup and reports ready on the next activation',async()=>{
+  const root=await mkdtemp(join(tmpdir(),'dkn-rc3-patch-'));
+  try{
+    const archive=join(root,'app.asar'),manifest='dsh/node_modules/@deepseek-ai/dsh-client-ui-workspace/package.json',client='dsh/node_modules/@deepseek-ai/dsh-client-ui-workspace/lib/client.js';
+    await writeFile(archive,JSON.stringify({files:{[manifest]:Buffer.from('{"version":"0.2.2-rc.3"}').toString('base64'),[client]:Buffer.from(rc3Client).toString('base64')}}));
+    const asar=fakeAsar(),result=await ensureDshSidebarPatch({resourcesPath:root,argv:[],asar});
+    assert.equal(result.status,'restart-required');assert.equal(result.patchVersion,'dsh-0.2.2-rc.3-sidebar-addon-v4');
+    const backup=(await readdir(root)).find(name=>name.endsWith('.bak'));
+    assert.equal(asar.extractFile(join(root,backup),client).toString(),rc3Client);
+    assert.equal((await ensureDshSidebarPatch({resourcesPath:root,argv:[],asar})).status,'ready');
+  }finally{await rm(root,{recursive:true,force:true});}
+});
+
 const workspaceClient="({\n\t\t\t\t\t\"sidebar.workspaces.directoryFlow\": {kind:\"single\"}\n});\nfunction Fake(){return [jsx(\"div\",{\n\t\t\t\t\t\tclassName: WorkspaceBrowser_module_css_default.listArea,\n\t\t\t\t\t\tchildren: wide && (jsx(SessionTree,{\n\t\t\t\t\t\t\tt\n\t\t\t\t\t\t}))\n\t\t\t\t\t}),\n\t\t\t\t\tworkspaceActionRequest !== null && (0, react_jsx_runtime.jsx)(WorkspaceDialogs, {\n})]};";
 
 test('real ASAR replacement locates the executable, refreshes cached headers and preserves unpacked files',{skip:!process.env.DKN_TEST_ASAR_MODULE},async()=>{
@@ -29,7 +62,7 @@ test('real ASAR replacement locates the executable, refreshes cached headers and
     const resources=join(root,'resources');
     const manifest='dsh/node_modules/@deepseek-ai/dsh-client-ui-workspace/package.json',client='dsh/node_modules/@deepseek-ai/dsh-client-ui-workspace/lib/client.js';
     const referenceClient=process.env.DKN_TEST_DSH_CLIENT?await readFile(process.env.DKN_TEST_DSH_CLIENT,'utf8'):workspaceClient;
-    const streams=[[manifest,'{"version":"0.2.2-rc.1"}'],[client,referenceClient],['native.bin','synthetic-native-bytes']].map(([path,text])=>({path,type:'file',unpacked:path==='native.bin',stat:{mode:0o644,size:Buffer.byteLength(text)},streamGenerator:()=>Readable.from([Buffer.from(text)])}));
+    const streams=[[manifest,JSON.stringify({version:process.env.DKN_TEST_DSH_VERSION||'0.2.2-rc.1'})],[client,referenceClient],['native.bin','synthetic-native-bytes']].map(([path,text])=>({path,type:'file',unpacked:path==='native.bin',stat:{mode:0o644,size:Buffer.byteLength(text)},streamGenerator:()=>Readable.from([Buffer.from(text)])}));
     await asar.createPackageFromStreams(join(resources,'app.asar'),streams);
     const result=await ensureDshSidebarPatch({resourcesPath:undefined,argv:[],execPath:join(root,'DeepSeek Harness.exe'),asar});
     assert.equal(result.status,'restart-required',JSON.stringify(result));

@@ -1,7 +1,7 @@
 {
   "name": "dsh-dkn-agent",
   "displayName": "DKN Agent",
-  "version": "2.1.5",
+  "version": "2.1.6",
   "bundledCodeBuddyVersion": "1.0.4",
   "description": "在 DSH 接入 CodeBuddy、Codex CLI、Qoder ACP 和 ZCode 模型，提供原生 Codex 项目、账号额度、手动每日奖励及项目协作。",
   "type": "module",
@@ -32,22 +32,22 @@
   ],
   "engines": {
     "node": ">=24.9.0",
-    "dsh": "0.2.2-rc.1"
+    "dsh": "0.2.2-rc.1 || 0.2.2-rc.3"
   },
   "dependencies": {},
   "peerDependencies": {
     "@deepseek-ai/cordis": "^4.0.5",
     "@deepseek-ai/schemastery": "^3.18.5",
-    "@deepseek-ai/dsh-llm": "0.2.2-rc.1",
-    "@deepseek-ai/dsh-attachment": "0.2.2-rc.1",
-    "@deepseek-ai/dsh-client-locale": "0.2.2-rc.1",
-    "@deepseek-ai/dsh-client-ui-layout": "0.2.2-rc.1",
-    "@deepseek-ai/dsh-client-ui-renderer": "0.2.2-rc.1",
-    "@deepseek-ai/dsh-client-ui-settings": "0.2.2-rc.1",
-    "@deepseek-ai/dsh-client-ui-plugin-manager": "0.2.2-rc.1",
+    "@deepseek-ai/dsh-llm": "0.2.2-rc.1 || 0.2.2-rc.3",
+    "@deepseek-ai/dsh-attachment": "0.2.2-rc.1 || 0.2.2-rc.3",
+    "@deepseek-ai/dsh-client-locale": "0.2.2-rc.1 || 0.2.2-rc.3",
+    "@deepseek-ai/dsh-client-ui-layout": "0.2.2-rc.1 || 0.2.2-rc.3",
+    "@deepseek-ai/dsh-client-ui-renderer": "0.2.2-rc.1 || 0.2.2-rc.3",
+    "@deepseek-ai/dsh-client-ui-settings": "0.2.2-rc.1 || 0.2.2-rc.3",
+    "@deepseek-ai/dsh-client-ui-plugin-manager": "0.2.2-rc.1 || 0.2.2-rc.3",
     "react": "^18.2.0",
-    "@deepseek-ai/dsh-client-ui-workspace": "0.2.2-rc.1",
-    "@deepseek-ai/dsh-client-ui-context-menu": "0.2.2-rc.1"
+    "@deepseek-ai/dsh-client-ui-workspace": "0.2.2-rc.1 || 0.2.2-rc.3",
+    "@deepseek-ai/dsh-client-ui-context-menu": "0.2.2-rc.1 || 0.2.2-rc.3"
   },
   "devDependencies": {
     "react": "^18.2.0",

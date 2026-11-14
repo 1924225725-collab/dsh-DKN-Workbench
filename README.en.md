@@ -1,6 +1,6 @@
 # dsh-DKN-Workbench
 
-DKN Workbench for DSH (formerly DKN Agent) is an integrated workbench plugin for DeepSeek Harness on Windows. Current: `2.1.5`, targeting DSH `0.2.2-rc.1`. Includes native Codex projects/conversations, domestic and international CodeBuddy CLI model providers, a ZCode CLI app-server model provider, and an embedded collaboration core extracted from Agent Hub. No gateway, remote cluster or DSH desktop distribution is included.
+DKN Workbench for DSH (formerly DKN Agent) is an integrated workbench plugin for DeepSeek Harness on Windows. Current: `2.1.6`, targeting DSH `0.2.2-rc.1` / `0.2.2-rc.3`. Includes native Codex projects/conversations, domestic and international CodeBuddy CLI model providers, a ZCode CLI app-server model provider, and an embedded collaboration core extracted from Agent Hub. No gateway, remote cluster or DSH desktop distribution is included.
 
 [Latest release](https://github.com/1924225725-collab/dsh-DKN-Workbench/releases/latest) · [Standalone CodeBuddy CLI (China)](https://github.com/1924225725-collab/dsh-codebuddy-cli-cn) · [简体中文](README.md)
 
@@ -43,7 +43,7 @@ Own data lives at `%LOCALAPPDATA%\dsh-dkn-agent`. The hub subdirectory and expor
 
 On 2026-11-10 the core suite passed 48 tests with 1 skipped, covering ZCode per-turn usage normalization (cached input counted once) and the Codex project-mode model list with `model`/`effort` forwarding; the built client bundle was verified to carry the per-session model-visibility patch. 41 core tests with optional real ASAR enabled, 223 regional CLI tests, isolated official Codex protocol checks with zero model requests, and native-component browser checks with synthetic collaboration replies passed. No real conversations, models or installed DSH were touched. Real-account execution, actual desktop exit patching and live cross-client behavior still require acceptance testing.
 
-Requires Windows 10/11, DSH `0.2.2-rc.1`, and Node.js `24.9+` for build/CLI environment. Install and sign in to official runtimes separately. The plugin does not install Agent software or manage credentials.
+Requires Windows 10/11, DSH `0.2.2-rc.1` / `0.2.2-rc.3`, and Node.js `24.9+` for build/CLI environment. Install and sign in to official runtimes separately. The plugin does not install Agent software or manage credentials.
 
 
 

@@ -29,7 +29,7 @@ test('model isolation declares its service and restores directories on disposal'
 });
 
 let cordis;
-try {cordis=await import('../research/dsh-full-rc1/vendor/cordis/lib/index.js');}
+try {cordis=await import(process.env.DKN_TEST_DSH_UI==='rc3'?'../research/dsh-rc3-reference/node_modules/@deepseek-ai/cordis/lib/index.js':'../research/dsh-full-rc1/vendor/cordis/lib/index.js');}
 catch(error){if(error.code!=='ERR_MODULE_NOT_FOUND')throw error;}
 
 test('built client activates and unloads under the real DSH Cordis framework',{skip:!cordis},async()=>{

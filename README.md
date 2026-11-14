@@ -1,6 +1,6 @@
 # dsh-DKN-Workbench
 
-DKN 集成工作台是面向 DeepSeek Harness 的 Windows 插件（原名 DKN Agent）。在 DSH 中浏览和继续本机 Codex 项目对话，使用 Codex、CodeBuddy 和 ZCode 的 CLI 模型，通过 Qoder ACP 使用本机账号模型，并按项目组织 Agent 协作。当前为 `2.1.5`，适配 DSH `0.2.2-rc.1`。
+DKN 集成工作台是面向 DeepSeek Harness 的 Windows 插件（原名 DKN Agent）。在 DSH 中浏览和继续本机 Codex 项目对话，使用 Codex、CodeBuddy 和 ZCode 的 CLI 模型，通过 Qoder ACP 使用本机账号模型，并按项目组织 Agent 协作。当前为 `2.1.6`，适配 DSH `0.2.2-rc.1` / `0.2.2-rc.3`。
 
 [下载最新版](https://github.com/1924225725-collab/dsh-DKN-Workbench/releases/latest) · [独立 CodeBuddy 版（国内 CLI）](https://github.com/1924225725-collab/dsh-codebuddy-cli-cn) · [English](README.en.md)
 
@@ -23,7 +23,7 @@ DKN 集成工作台是面向 DeepSeek Harness 的 Windows 插件（原名 DKN Ag
 4. 工作区与 Codex 项目在**同一滚动区域**：向下滚动，经过分界线和 Codex 标题继续浏览。展开项目并打开对话，使用 DSH 原生对话界面继续。
 5. 左侧点击 **项目协作**，或从 DKN Agent 首页、总设置进入项目协作。自动读取 DSH 工作区项目，项目中的对话自动成为成员；在 DSH 中管理项目和对话，在成员页配置职责与协作权限。
 
-需要 Windows 10/11、DSH `0.2.2-rc.1`，构建和 CLI 环境使用 Node.js `24.9+`。需要哪个运行时，请先自行安装并完成其官方登录。插件不代办登录、不复制凭据、不安装 Agent 软件。
+需要 Windows 10/11、DSH `0.2.2-rc.1` / `0.2.2-rc.3`，构建和 CLI 环境使用 Node.js `24.9+`。需要哪个运行时，请先自行安装并完成其官方登录。插件不代办登录、不复制凭据、不安装 Agent 软件。
 
 ## 2.1.5 Qoder 每日奖励查询修复
 

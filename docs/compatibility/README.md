@@ -1,4 +1,8 @@
-# DSH 0.2.2-rc.1 侧栏适配
+# DSH 0.2.2-rc.1 / 0.2.2-rc.3 侧栏适配
+
+2.1.6 新增 rc3 支持，保留 rc1。rc3 使用独立的 v4 变换：匹配该版本的压缩代码，保留原生滚动引用，把扩展位放进原生工作区列表，并通过 `renderFactorySlot` 渲染 Codex 项目操作菜单。菜单由插件处理，避免把 Codex 项目 ID 传给 DSH 原生工作区修改接口。
+
+使用 `DKN_TEST_DSH_UI=rc3` 可切换到本机 rc3 安装包提取的真实项目行、样式和官方 primitives 运行浏览器测试；默认仍验证 rc1。参考文件仅在 research 中，不进入发布包。真实 ASAR 测试在临时副本中进行，不修改运行中的桌面程序。安装后的首次侧栏适配可能要求完全退出 DSH 再打开。
 
 `dsh-0.2.2-rc.1-sidebar-addon.patch` 是声明 `sidebar.workspaces.after` 的基础源码补丁。
 
