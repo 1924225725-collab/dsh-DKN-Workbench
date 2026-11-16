@@ -9,7 +9,7 @@
       },[root,query]);
       React.useEffect(()=>{if(!supported)return;let active=true;const run=async()=>{if(active&&!claiming.current)await refresh()};run();const timer=setInterval(run,60000);window.addEventListener('dkn-rewards-changed',run);return()=>{active=false;clearInterval(timer);window.removeEventListener('dkn-rewards-changed',run)}},[supported,refresh]);
       if(!supported)return provider==='codebuddy'||provider==='zcode'?h('small',{style:{opacity:.65}},provider==='zcode'?'活动领取暂未接入，请在 ZCode 客户端查看活动及验证要求。':'国际版签到尚未验证，暂不开放领取。'):null;
-      const labels={claimable:'可领取',claimed:'当前周期已领取','no-activity':'当前没有下发每日活动','not-eligible':'当前账号不符合资格',expired:'活动已结束','not-started':'活动尚未开始',unavailable:'状态暂无法识别','login-required':'需要登录','client-required':'需要官方桌面身份',error:'查询失败',unknown:'结果待核对'};
+      const labels={'background-required':'等待后台就绪',claimable:'可领取',claimed:'当前周期已领取','no-activity':'当前没有下发每日活动','not-eligible':'当前账号不符合资格',expired:'活动已结束','not-started':'活动尚未开始',unavailable:'状态暂无法识别','login-required':'需要登录','client-required':'需要官方桌面身份',error:'查询失败',unknown:'结果待核对'};
       const account=provider==='qoder'?'Qoder 国际版桌面账号（可能与 CLI 账号不同）':accountId!==undefined?'此账号的国内版每日签到':'CodeBuddy 国内版当前默认账号';
       const claim=async()=>{
         if(claiming.current)return;claiming.current=true;
@@ -28,12 +28,12 @@
     }
     function AutoCheckinToggle(){
       const [value,setValue]=React.useState(null),[busy,setBusy]=React.useState(false),[error,setError]=React.useState('');
-      React.useEffect(()=>{let active=true;const refresh=()=>codexApi('auto-checkin').then(v=>{if(active)setValue(v)}).catch(()=>{if(active)setError('自动签到设置读取失败')});refresh();const timer=setInterval(refresh,30000);return()=>{active=false;clearInterval(timer)}},[]);
+      React.useEffect(()=>{let active=true;const refresh=()=>codexApi('auto-checkin').then(v=>{if(active){setValue(v);setError('')}}).catch(()=>{if(active)setError('自动签到设置读取失败')});refresh();const timer=setInterval(refresh,30000);window.addEventListener('dkn-background-changed',refresh);return()=>{active=false;clearInterval(timer);window.removeEventListener('dkn-background-changed',refresh)}},[]);
       const toggle=async enabled=>{const previous=value;setValue(old=>({...old,enabled}));setBusy(true);setError('');try{setValue(await codexApi('auto-checkin',{enabled}))}catch{setValue(previous);setError('自动签到设置保存失败，请重试')}finally{setBusy(false)}};
       const time=stamp=>new Date(stamp).toLocaleString('zh-CN',{timeZone:'Asia/Shanghai',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hour12:false});
       const labels={claimed:'已领取',claimable:'待领取','no-activity':'无活动','not-eligible':'不符合资格',expired:'活动结束','not-started':'未开始','login-required':'需要登录','client-required':'缺少桌面身份',unavailable:'未接入',error:'失败',unknown:'结果待核对'};
       return h('div',{style:{borderTop:'1px solid var(--dsw-alias-border-l4)',paddingTop:10,display:'grid',gap:6}},
-        h('label',{style:{display:'flex',gap:8,alignItems:'center'}},h('input',{type:'checkbox','aria-label':'自动签到',checked:value?.enabled===true,disabled:busy||!value,onChange:e=>toggle(e.target.checked)}),'自动签到'),
+        h('label',{style:{display:'flex',gap:8,alignItems:'center'}},h('input',{type:'checkbox','aria-label':'自动签到',checked:value?.enabled===true,disabled:busy||!value||value.backgroundReady===false,onChange:e=>toggle(e.target.checked)}),'自动签到'),
         h('small',{style:{opacity:.7}},'每天 11:00–13:00（北京时间）随机一次。覆盖 CodeBuddy 国内当前账号、Qoder 国际桌面账号；错过等次日，结果不确定不重试。'),
         value?.enabled&&value.scheduledAt?h('small',{role:'status'},value.running?'自动签到正在执行…':'下次计划：'+time(value.scheduledAt)+'（北京时间）'):null,
         value?.lastRun?h('small',{role:'status'},'上次执行：'+time(value.lastRun.at)+' · '+Object.entries(value.lastRun.results||{}).map(([id,state])=>(id==='codebuddy'?'CodeBuddy':'Qoder')+' '+(labels[state]||'待核对')).join(' · ')):null,
@@ -43,7 +43,7 @@
       const targets=[{id:'codebuddy',label:'CodeBuddy 国内',url:apiRoot+'rewards/checkin?provider=codebuddy',header:'x-dkn-action'},{id:'qoder',label:'Qoder 国际',url:apiRoot+'rewards/checkin?provider=qoder',header:'x-dkn-action'}];
       const [rows,setRows]=React.useState({}),[busy,setBusy]=React.useState(false),[result,setResult]=React.useState('');
       const lock=React.useRef(false),generation=React.useRef(0);
-      const labels={claimable:'可签到',claimed:'当前周期已领取','no-activity':'当前无每日活动','not-eligible':'不符合领取资格',expired:'活动已结束','not-started':'尚未开始','login-required':'需要登录','client-required':'需要官方桌面身份',unavailable:'状态未确认',error:'查询失败',unknown:'结果待核对'};
+      const labels={'background-required':'等待后台就绪',claimable:'可签到',claimed:'当前周期已领取','no-activity':'当前无每日活动','not-eligible':'不符合领取资格',expired:'活动已结束','not-started':'尚未开始','login-required':'需要登录','client-required':'需要官方桌面身份',unavailable:'状态未确认',error:'查询失败',unknown:'结果待核对'};
       const request=async(target,claim=false)=>{
         try{
           const response=await fetch(target.url,{cache:'no-store',signal:AbortSignal.timeout(claim?60000:30000),...claim?{method:'POST',headers:{'Content-Type':'application/json',[target.header]:'1'},body:JSON.stringify({action:'claim',provider:target.id})}:{}});

@@ -58,8 +58,14 @@ test('Host plugin mounts routes and registers a native DSH Codex provider withou
 test('JSON body decoding preserves Chinese text across byte boundaries',async()=>{const text=JSON.stringify({body:'项目协作上下文'}),bytes=Buffer.from(text),at=bytes.indexOf(Buffer.from('项'))+1;const value=await readJson({async *[Symbol.asyncIterator](){yield bytes.subarray(0,at);yield bytes.subarray(at);}});assert.equal(value.body,'项目协作上下文');});
 
 test('automatic check-in settings require trusted mutations and persist an explicit boolean opt-in',async()=>{
-  const directory=await mkdtemp(join(tmpdir(),'dkn-auto-http-')),autoCheckin=new AutoCheckin({directory,targets:[],intervalMs:0});const server=createServer(createHandler({autoCheckin}));
+  const directory=await mkdtemp(join(tmpdir(),'dkn-auto-http-')),autoCheckin=new AutoCheckin({directory,targets:[],intervalMs:0});const server=createServer(createHandler({ctx:{connection:{requestRejection:()=>undefined}},autoCheckin}));
   try{await autoCheckin.ready;await new Promise(r=>server.listen(0,'127.0.0.1',r));const url='http://127.0.0.1:'+server.address().port+'/plugins/dkn-agent/auto-checkin';const post=(enabled,headers={})=>fetch(url,{method:'POST',headers:{'Content-Type':'application/json','x-dkn-action':'1',...headers},body:JSON.stringify({enabled})});
     assert.equal((await(await fetch(url)).json()).enabled,false);assert.equal((await post(true,{Origin:'https://foreign.example'})).status,403);assert.equal(autoCheckin.snapshot().enabled,false);assert.equal((await post('true')).status,400);assert.equal((await(await post(true)).json()).enabled,true);assert.equal((await(await post(false)).json()).enabled,false);
   }finally{await autoCheckin.close();server.closeAllConnections();await new Promise(r=>server.close(r));await rm(directory,{recursive:true,force:true});}
+});
+
+test('the DKN handler runs DSH admission before any state reads or local-origin fallback',async()=>{
+ let reads=0;
+ for(const code of [401,403,undefined]){let status;const service={ctx:{connection:{requestRejection:()=>code}},snapshot(){reads++;return{connected:false}}};await createHandler(service)({headers:{host:'127.0.0.1:3080'},method:'GET',url:'/plugins/dkn-agent/state'},{writeHead(value){status=value},end(){}});assert.equal(status,code||200);}
+ assert.equal(reads,1);
 });
