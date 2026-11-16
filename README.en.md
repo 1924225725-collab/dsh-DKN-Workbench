@@ -1,6 +1,6 @@
 # dsh-DKN-Workbench
 
-DKN Workbench for DSH (formerly DKN Agent) is an integrated workbench plugin for DeepSeek Harness on Windows. Current: `2.2.2`, targeting DSH `0.2.2-rc.1` / `0.2.2-rc.3`. Includes native Codex projects/conversations, domestic and international CodeBuddy CLI model providers, a ZCode CLI app-server model provider, and an embedded collaboration core extracted from Agent Hub. No gateway, remote cluster or DSH desktop distribution is included.
+DKN Workbench for DSH (formerly DKN Agent) is an integrated workbench plugin for DeepSeek Harness on Windows. Current: `2.2.4`, targeting DSH `0.2.2-rc.1` / `0.2.2-rc.3`. Includes native Codex projects/conversations, domestic and international CodeBuddy CLI model providers, a ZCode CLI app-server model provider, and an embedded collaboration core extracted from Agent Hub. No gateway, remote cluster or DSH desktop distribution is included.
 
 [Latest release](https://github.com/1924225725-collab/dsh-DKN-Workbench/releases/latest) · [Standalone CodeBuddy CLI (China)](https://github.com/1924225725-collab/dsh-codebuddy-cli-cn) · [简体中文](README.md)
 
@@ -65,15 +65,25 @@ Qoder may omit the daily campaign when a request lacks the official desktop devi
 
 Missing components are reported as an unavailable client identity rather than no campaign. A real read-only comparison changed from no daily activity to a claimable 100-Credits reward; no real claim was executed during this fix.
 
+## 2.2.4 independent background service
+
+API export and daily check-in share a standalone worker, configured from the plugin. Optional keep-alive after DSH exit and Windows login startup are disabled by default. Existing API address, Key, public model name and daily schedule are retained. Check-in controls now appear only in model settings. See [background service guide](docs/background-service.md).
+
+## Optional automatic daily rewards
+
+The top-level check-in summary includes an automatic check-in toggle, disabled by default. When enabled, it picks and persists one random time each day between 11:00 and 13:00 Asia/Shanghai. It checks the current CodeBuddy China account and the Qoder International desktop account and only claims eligible daily rewards. Other account-pool profiles are excluded.
+
+The worker must be running; DSH can exit when keep-alive is enabled. A missed time resumes only within the same window; after 13:00 it schedules the next day. Attempts are recorded before claiming to avoid duplicate mutations after crashes/restarts. Failures and uncertain outcomes are not retried automatically. Disabling stops subsequent platforms but cannot retract an already-sent request. No Windows background task is installed.
+
 ## 2.1.4 top-level check-in status
 
 Settings home, model settings and usage pages show a check-in summary at the top. One click checks and claims daily rewards sequentially for the current CodeBuddy China default account and the Qoder International desktop account. Claimed or absent rewards are skipped; one provider failing does not prevent the other from being checked. Other account-pool profiles retain independent controls.
 
-Individual settings also expose status above configuration controls, with a single-click action instead of a second confirmation. Nothing is claimed on startup, and uncertain mutations are never retried automatically.
+Individual settings also expose status above configuration controls, with a single-click action instead of a second confirmation. Automatic check-in is disabled by default, and uncertain mutations are never retried automatically.
 
 ## 2.1.3 manual daily rewards
 
-CodeBuddy China and Qoder International settings/usage pages now show daily reward status and an explicit confirmed claim action. CodeBuddy isolated profiles have independent claim controls. Qoder uses the current Windows international desktop login, which may differ from its CLI login; only the daily 100-Credits campaign is eligible. No automatic claims, token refresh, device-identity generation or other gift claims are performed.
+CodeBuddy China and Qoder International settings/usage pages now show daily reward status and an explicit confirmed claim action. CodeBuddy isolated profiles have independent claim controls. Qoder uses the current Windows international desktop login, which may differ from its CLI login; only the daily 100-Credits campaign is eligible. Automatic claims require the opt-in toggle added in 2.2.4. No token refresh, device-identity generation or other gift claims are performed.
 
 Qoder cycles reset at 10:00 Beijing time. Missing campaigns, eligibility restrictions, claimed rewards and uncertain outcomes remain distinct. In-flight claims coalesce; failed or uncertain mutations are never retried automatically. Live read-only queries passed; actual claims were tested with simulated upstream responses only, not real reward mutations or installed DSH acceptance.
 
@@ -97,4 +107,4 @@ Compact icon/name provider entries, shared settings headers and controls, and a 
 
 ### Local API service
 
-Open DKN Agent → API service to generate one key and select one backend model. Clients use one endpoint, key and public model name (default `dkn`); switch providers/models in the plugin without reconfiguring clients. Supports text Chat Completions JSON/SSE, key rotation, bounded queues and cancellation. ZCode requires current-process verification; project mode is excluded. Disabled by default, binds only 127.0.0.1 and stops when DSH exits. See [API service guide](docs/api-service.md).
+Open DKN Agent → API service to generate one key and select one backend model. Clients use one endpoint, key and public model name (default `dkn`); switch providers/models in the plugin without reconfiguring clients. Supports text Chat Completions JSON/SSE, key rotation, bounded queues and cancellation. ZCode requires current-process verification; project mode is excluded. Disabled by default, binds only 127.0.0.1 and can continue after DSH exits when keep-alive is enabled. See [API service guide](docs/api-service.md).

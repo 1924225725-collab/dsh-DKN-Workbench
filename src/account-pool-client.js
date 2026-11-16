@@ -26,7 +26,7 @@
           const balance=quota?.state==='available'&&Number.isFinite(quota.remaining)?quota.remaining.toLocaleString(undefined,{maximumFractionDigits:2})+' 积分':quota?.state==='error'?'待登录或检查':'读取余额…';
           return h('article',{key:id,style:{border:'1px solid var(--dsw-alias-border-l4)',borderRadius:10,padding:14,background:selected?'var(--dsw-alias-bg-layer-3)':'var(--dsw-alias-bg-layer-2)',display:'grid',gap:8}},
             h('div',{style:{display:'flex',gap:12,alignItems:'center',flexWrap:'wrap'}},h('div',{style:{flex:1,minWidth:140}},h('strong',null,account.label),h('div',{style:{fontSize:18,marginTop:6}},balance)),selected?h('span',{style:{fontSize:12,color:'var(--dsw-alias-label-secondary)'}},'当前默认'):control('设为默认',()=>choose(account.id),account.pathError||(!account.credentialsPresent&&account.id!==null))),
-            active&&statusUrl.includes('-cn/')?h(DailyRewards,{provider:'codebuddy',accountId:account.id,disabled,compact:true,onClaimed:()=>refresh(true)}):null,
+
             h('details',null,h('summary',{style:{cursor:'pointer',fontSize:12,color:'var(--dsw-alias-label-secondary)'}},'登录与详情'),
               quota?.error?h('p',{role:'status'},quota.error):null,
               account.id?h('div',{style:{...rowStyle,marginTop:10}},control(account.loginCommand?'重新生成登录命令':'生成登录命令',()=>action('prepareLogin',account.id),account.pathError),control('移出账号池',()=>setConfirmRemoval(account.id),selected||account.activeCalls>0)):h(Notice,null,'沿用官方 CLI 的当前登录。可在连接页复制登录命令。'),

@@ -15,8 +15,11 @@ const t=key=>({cn:'国内版',intl:'国际版',regionPicker:'配置区域',quick
 const regions=['cn','intl'].map(id=>({id,props:{t,region:id,legacyForm:form,statusUrl:'/plugins/dsh-codebuddy-cli-'+id+'/status'}}));
 function render(id){root.render(React.createElement(id==='codebuddy-cli'?api.UnifiedSettingsPage:pages[id],id==='codebuddy-cli'?{ctx,t,regions}:{ctx}));}
 window.render=render;window.setAllFlags=async()=>{for(const key of Object.keys(value))await form.set(key,'false')};window.renderFooter=()=>root.render(React.createElement(api.QuotaFooterAction,{ctx,wide:true}));render('dkn-agent-models');</script>`;
-const probes=[];let updateQueries=0;const claimedRewards=new Set();let rewardClaims=0;let failedRewardQuery='';
+const probes=[];let updateQueries=0;const claimedRewards=new Set();let rewardClaims=0;let failedRewardQuery='';let autoEnabled=false;let backgroundPrefs={running:true,keepAlive:false,autoStart:false,version:'fixture'};
 const server=createServer((req,res)=>{
+ if(req.url.endsWith('/background/state')){res.writeHead(200,{'Content-Type':'application/json'});return res.end(JSON.stringify(backgroundPrefs));}
+ if(req.url.endsWith('/background/action')){let body='';req.on('data',part=>body+=part);req.on('end',()=>{const value=JSON.parse(body);backgroundPrefs={...backgroundPrefs,...value};res.writeHead(200,{'Content-Type':'application/json'});res.end(JSON.stringify(backgroundPrefs));});return;}
+ if(req.url.endsWith('/auto-checkin')){const reply=()=>{res.writeHead(200,{'Content-Type':'application/json'});res.end(JSON.stringify({enabled:autoEnabled,scheduledAt:Date.now()+86400000,lastRun:null}));};if(req.method==='POST'){let body='';req.on('data',part=>body+=part);req.on('end',()=>{autoEnabled=JSON.parse(body).enabled;reply();});return;}return reply();}
  if(req.url.includes('/checkin')){const key=req.url.includes('codebuddy')?'codebuddy':'qoder';if(req.method==='POST'){rewardClaims++;claimedRewards.add(key)}res.writeHead(200,{'Content-Type':'application/json'});return res.end(JSON.stringify({state:req.method==='GET'&&failedRewardQuery===key?'error':claimedRewards.has(key)?'claimed':'claimable',amount:100,resetAt:Date.now()+3600000,mutationAccepted:req.method==='POST'}));}
  if(req.url.endsWith('/update')){updateQueries++;res.writeHead(200,{'Content-Type':'application/json'});return res.end(JSON.stringify({currentVersion:'2.1.2',latestVersion:'2.2.0',updateAvailable:true}));}
  if(req.method==='POST'&&(req.url.endsWith('/test')||req.url.endsWith('/actions'))){probes.push(req.url);res.writeHead(200,{'Content-Type':'application/json'});return res.end(JSON.stringify({state:'ready',text:'OK'}));}
@@ -43,6 +46,8 @@ try{
  }
  assert.equal(probes.length,4);
  const summary=page.getByRole('region',{name:'签到状态',exact:true});
+ const keep=summary.getByLabel('退出 DSH 后继续运行',{exact:true});await keep.waitFor();await keep.click();await page.waitForFunction(()=>document.querySelector('input[aria-label=\"退出 DSH 后继续运行\"]').checked);assert.equal(backgroundPrefs.keepAlive,true);
+ const auto=summary.getByLabel('自动签到',{exact:true});await auto.waitFor();await page.waitForFunction(()=>!document.querySelector('input[aria-label="自动签到"]').disabled);assert.equal(await auto.isChecked(),false);await auto.check();await summary.getByText(/下次计划：/).waitFor();assert.equal(autoEnabled,true);assert.equal(rewardClaims,0);await auto.uncheck();await page.waitForFunction(()=>!document.querySelector('input[aria-label="自动签到"]').disabled);assert.equal(autoEnabled,false);
  await summary.getByText('CodeBuddy 国内：可签到',{exact:true}).waitFor();assert.equal(rewardClaims,0);
  await summary.getByRole('button',{name:'一键签到',exact:true}).click();
  await summary.getByText('处理完成：已领取 2，跳过 0，待处理 0。',{exact:true}).waitFor();
@@ -60,12 +65,7 @@ try{
   await page.evaluate(()=>window.render('dkn-agent-models'));
   await page.getByRole('button',{name:label,exact:true}).click();
   await page.locator('[data-provider-settings="'+provider+'"]').waitFor();
-  if(['codebuddy','qoder'].includes(provider)){
-   const rewards=page.getByRole('region',{name:'每日奖励 '+provider,exact:true});await rewards.getByRole('button',{name:'一键签到',exact:true}).waitFor();
-   assert.equal(rewardClaims,provider==='codebuddy'?0:1);
-   await rewards.getByRole('button',{name:'一键签到',exact:true}).click();
-   await rewards.getByText('当前周期已领取',{exact:true}).waitFor();assert.equal(await rewards.getByRole('button',{name:'一键签到',exact:true}).isDisabled(),true);
-  }
+  assert.equal(await page.getByRole('region',{name:'签到状态',exact:true}).count(),0);
   if(provider==='codebuddy'){
    await page.getByRole('button',{name:'国际版',exact:true}).click();
    assert.equal(await page.locator('[data-region="intl"]').isVisible(),true);
