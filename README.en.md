@@ -1,11 +1,11 @@
 # dsh-DKN-Workbench
 
-DKN Workbench for DSH (formerly DKN Agent) is an integrated workbench plugin for DeepSeek Harness on Windows. Current: `2.2.5`, targeting DSH `0.2.2-rc.1` / `0.2.2-rc.3`. Includes native Codex projects/conversations, domestic and international CodeBuddy CLI model providers, a ZCode CLI app-server model provider, and an embedded collaboration core extracted from Agent Hub. No gateway, remote cluster or DSH desktop distribution is included.
+DKN Workbench for DSH (formerly DKN Agent) is an integrated workbench plugin for DeepSeek Harness on Windows. Current: `2.2.6`, targeting DSH `0.2.2-rc.1` / `0.2.2-rc.3`. Includes native Codex projects/conversations, domestic and international CodeBuddy CLI model providers, a ZCode CLI app-server model provider, and an embedded collaboration core extracted from Agent Hub. No gateway, remote cluster or DSH desktop distribution is included.
 
 [Latest release](https://github.com/1924225725-collab/dsh-DKN-Workbench/releases/latest) · [Standalone CodeBuddy CLI (China)](https://github.com/1924225725-collab/dsh-codebuddy-cli-cn) · [简体中文](README.md)
 
 
-2.2.5 detects an independent Node.js runtime under Electron hosts and provides a copyable AI deployment prompt when missing. Saved API settings remain visible, rewards report that the worker is required, and DSH HTTP routes now pass host admission checks. See [runtime guide](docs/background-environment.md).
+2.2.6 detects an independent Node.js runtime under Electron hosts and provides a copyable AI deployment prompt when missing. Saved API settings remain visible, rewards report that the worker is required, and DSH HTTP routes now pass host admission checks. See [runtime guide](docs/background-environment.md).
 
 ## Use
 
@@ -68,7 +68,7 @@ Qoder may omit the daily campaign when a request lacks the official desktop devi
 
 Missing components are reported as an unavailable client identity rather than no campaign. A real read-only comparison changed from no daily activity to a claimable 100-Credits reward; no real claim was executed during this fix.
 
-## 2.2.5 independent background service
+## 2.2.6 independent background service
 
 API export and daily check-in share a standalone worker, configured from the plugin. Optional keep-alive after DSH exit and Windows login startup are disabled by default. Existing API address, Key, public model name and daily schedule are retained. Check-in controls now appear only in model settings. See [background service guide](docs/background-service.md).
 
@@ -86,7 +86,7 @@ Individual settings also expose status above configuration controls, with a sing
 
 ## 2.1.3 manual daily rewards
 
-CodeBuddy China and Qoder International settings/usage pages now show daily reward status and an explicit confirmed claim action. CodeBuddy isolated profiles have independent claim controls. Qoder uses the current Windows international desktop login, which may differ from its CLI login; only the daily 100-Credits campaign is eligible. Automatic claims require the opt-in toggle added in 2.2.5. No token refresh, device-identity generation or other gift claims are performed.
+CodeBuddy China and Qoder International settings/usage pages now show daily reward status and an explicit confirmed claim action. CodeBuddy isolated profiles have independent claim controls. Qoder uses the current Windows international desktop login, which may differ from its CLI login; only the daily 100-Credits campaign is eligible. Automatic claims require the opt-in toggle added in 2.2.6. No token refresh, device-identity generation or other gift claims are performed.
 
 Qoder cycles reset at 10:00 Beijing time. Missing campaigns, eligibility restrictions, claimed rewards and uncertain outcomes remain distinct. In-flight claims coalesce; failed or uncertain mutations are never retried automatically. Live read-only queries passed; actual claims were tested with simulated upstream responses only, not real reward mutations or installed DSH acceptance.
 
@@ -111,3 +111,7 @@ Compact icon/name provider entries, shared settings headers and controls, and a 
 ### Local API service
 
 Open DKN Agent → API service to generate one key and select one backend model. Clients use one endpoint, key and public model name (default `dkn`); switch providers/models in the plugin without reconfiguring clients. Supports text Chat Completions JSON/SSE, key rotation, bounded queues and cancellation. ZCode requires current-process verification; project mode is excluded. Disabled by default, binds only 127.0.0.1 and can continue after DSH exits when keep-alive is enabled. See [API service guide](docs/api-service.md).
+
+## Antigravity ACP (2.2.6)
+
+Adds a provider settings page, model catalogue, per-provider proxy settings and background/API routing. The current test account remains blocked by official verification/eligibility checks; adding the provider is not a claim that live generation passed. API export requires a successful text probe in the current worker. See [guide](docs/antigravity-acp.md).

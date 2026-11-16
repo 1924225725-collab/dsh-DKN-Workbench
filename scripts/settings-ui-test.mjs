@@ -9,7 +9,7 @@ const html=`<!doctype html><meta charset="utf-8"><style>*{box-sizing:border-box}
 const listeners=new Set();let value={showCodeBuddyQuota:'true',showCodexQuota:'true',showDeepSeekQuota:'true',showQoderQuota:'true',showZcodeQuota:'true'};
 let snapshot={status:'ready',writable:true,value,revision:1};const form={getSnapshot:()=>snapshot,subscribe(fn){listeners.add(fn);return()=>listeners.delete(fn)},async set(key,v){value={...value,[key]:v};snapshot={...snapshot,value,revision:snapshot.revision+1};for(const fn of listeners)fn();return true}};
 const root=ReactDOM.createRoot(document.getElementById('app'));
-const pages={'dkn-agent-models':api.DknModelsPage,'dkn-agent-cli':api.CodexCliSettingsPage,'dkn-agent-zcode':api.ZcodeSettingsPage,'dkn-agent-qoder':api.QoderSettingsPage,'dkn-agent-codex':api.CodexSettingsPage,'dkn-agent-quota':api.QuotaSettingsPage};
+const pages={'dkn-agent-models':api.DknModelsPage,'dkn-agent-cli':api.CodexCliSettingsPage,'dkn-agent-zcode':api.ZcodeSettingsPage,'dkn-agent-antigravity':api.AntigravitySettingsPage,'dkn-agent-qoder':api.QoderSettingsPage,'dkn-agent-codex':api.CodexSettingsPage,'dkn-agent-quota':api.QuotaSettingsPage};
 const ctx={emit(){},configForms:{get:()=>form},layout:{selectPanel(id){window.openedPanel=id;render(id)}}};
 const t=key=>({cn:'国内版',intl:'国际版',regionPicker:'配置区域',quickSetup:'CLI 安装与检测',navconnection:'连接',navmodels:'模型',navusage:'用量'}[key]||key);
 const regions=['cn','intl'].map(id=>({id,props:{t,region:id,legacyForm:form,statusUrl:'/plugins/dsh-codebuddy-cli-'+id+'/status'}}));
@@ -36,7 +36,7 @@ try{
  await page.getByRole('button',{name:'继续使用',exact:true}).click();
  assert.equal(probes.length,0);
  assert.equal(await page.getByLabel('DeepSeek 剩余额度',{exact:true}).count(),0);
- for(const provider of ['CodeBuddy','Codex','Qoder','ZCode']){
+ for(const provider of ['CodeBuddy','Codex','Qoder','ZCode','Antigravity']){
   await page.getByRole('button',{name:'验证 '+provider,exact:true}).click();
   const dialog=page.getByRole('dialog',{name:'验证 '+provider,exact:true});
   await dialog.getByRole('button',{name:'开始验证',exact:true}).click();
@@ -44,7 +44,7 @@ try{
   assert.equal(await dialog.locator('pre').textContent(),'OK');
   await dialog.getByRole('button',{name:'关闭验证 '+provider,exact:true}).click();
  }
- assert.equal(probes.length,4);
+ assert.equal(probes.length,5);
  const summary=page.getByRole('region',{name:'签到状态',exact:true});
  const keep=summary.getByLabel('退出 DSH 后继续运行',{exact:true});await keep.waitFor();await keep.click();await page.waitForFunction(()=>document.querySelector('input[aria-label=\"退出 DSH 后继续运行\"]').checked);assert.equal(backgroundPrefs.keepAlive,true);
  const auto=summary.getByLabel('自动签到',{exact:true});await auto.waitFor();await page.waitForFunction(()=>!document.querySelector('input[aria-label="自动签到"]').disabled);assert.equal(await auto.isChecked(),false);await auto.check();await summary.getByText(/下次计划：/).waitFor();assert.equal(autoEnabled,true);assert.equal(rewardClaims,0);await auto.uncheck();await page.waitForFunction(()=>!document.querySelector('input[aria-label="自动签到"]').disabled);assert.equal(autoEnabled,false);
@@ -61,11 +61,12 @@ try{
  assert.equal(await page.getByRole('button',{name:'Codex',exact:true}).count(),1);
  assert.equal(await page.getByText('Codex Agent',{exact:false}).count(),0);
  await mkdir('research/ui',{recursive:true});await page.screenshot({path:'research/ui/settings-models-dark.png'});
- for(const [label,id,provider] of [['CodeBuddy','codebuddy-cli','codebuddy'],['Codex','dkn-agent-cli','codex'],['Qoder','dkn-agent-qoder','qoder'],['ZCode','dkn-agent-zcode','zcode']]){
+ for(const [label,id,provider] of [['CodeBuddy','codebuddy-cli','codebuddy'],['Codex','dkn-agent-cli','codex'],['Qoder','dkn-agent-qoder','qoder'],['Antigravity','dkn-agent-antigravity','antigravity'],['ZCode','dkn-agent-zcode','zcode']]){
   await page.evaluate(()=>window.render('dkn-agent-models'));
   await page.getByRole('button',{name:label,exact:true}).click();
   await page.locator('[data-provider-settings="'+provider+'"]').waitFor();
   assert.equal(await page.getByRole('region',{name:'签到状态',exact:true}).count(),0);
+  if(provider==='antigravity'){await page.getByText('使用 Windows 系统代理',{exact:false}).waitFor();await page.getByRole('button',{name:'发送测试',exact:true}).click();await page.getByRole('status').filter({hasText:'OK'}).waitFor();await page.screenshot({path:'research/ui/settings-antigravity-dark.png',fullPage:true});continue;}
   if(provider==='codebuddy'){
    await page.getByRole('button',{name:'国际版',exact:true}).click();
    assert.equal(await page.locator('[data-region="intl"]').isVisible(),true);
@@ -87,7 +88,7 @@ try{
  for(const mode of ['dark','light']){
   await page.evaluate(mode=>document.body.classList.toggle('light',mode==='light'),mode);
   await page.setViewportSize({width:390,height:800});
-  for(const id of ['dkn-agent-models','codebuddy-cli','dkn-agent-cli','dkn-agent-qoder','dkn-agent-zcode','dkn-agent-quota','dkn-agent-codex']){
+  for(const id of ['dkn-agent-models','codebuddy-cli','dkn-agent-cli','dkn-agent-qoder','dkn-agent-antigravity','dkn-agent-zcode','dkn-agent-quota','dkn-agent-codex']){
    await page.evaluate(id=>window.render(id),id);await page.waitForTimeout(80);
    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false,id+' must fit mobile width');
   }

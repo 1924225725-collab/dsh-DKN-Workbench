@@ -47,7 +47,7 @@
       const [open,setOpen]=React.useState(false),[busy,setBusy]=React.useState(false),[result,setResult]=React.useState(null),[region,setRegion]=React.useState('cn');
       const verify=async()=>{setBusy(true);setResult(null);try{
         const codebuddy=provider==='codebuddy';
-        const response=await fetch(codebuddy?'/plugins/dsh-codebuddy-cli-'+region+'/actions':apiRoot+({codex:'cli',qoder:'qoder',zcode:'zcode'}[provider])+'/test',{method:'POST',headers:{'Content-Type':'application/json',[codebuddy?'x-dsh-codebuddy-action':'x-dkn-action']:'1'},body:JSON.stringify(codebuddy?{action:'test'}:{prompt:'Reply with exactly OK. Do not use any tools.'}),signal:AbortSignal.timeout(190000)});
+        const response=await fetch(codebuddy?'/plugins/dsh-codebuddy-cli-'+region+'/actions':apiRoot+({codex:'cli',qoder:'qoder',zcode:'zcode',antigravity:'antigravity'}[provider])+'/test',{method:'POST',headers:{'Content-Type':'application/json',[codebuddy?'x-dsh-codebuddy-action':'x-dkn-action']:'1'},body:JSON.stringify(codebuddy?{action:'test'}:{prompt:'Reply with exactly OK. Do not use any tools.'}),signal:AbortSignal.timeout(190000)});
         const value=await response.json();if(!response.ok)throw new Error(value.error||value.message||'验证失败');
         const reply=value.reply||value.text;if(typeof reply!=='string'||!reply.trim())throw new Error('未收到文字回复');
         setResult({reply});window.dispatchEvent(new Event('dkn-provider-verified'));onVerified?.();

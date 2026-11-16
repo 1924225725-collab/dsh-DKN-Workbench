@@ -14,7 +14,7 @@
       const [status,setStatus]=React.useState(null);
       React.useEffect(()=>{let active=true;
         const refresh=async()=>{
-          const paths=project?['/plugins/dkn-agent/state']:provider==='codebuddy'?['/plugins/dsh-codebuddy-cli-cn/status','/plugins/dsh-codebuddy-cli-intl/status']:['/plugins/dkn-agent/'+({codex:'cli',qoder:'qoder',zcode:'zcode'}[provider])+'/status'];
+          const paths=project?['/plugins/dkn-agent/state']:provider==='codebuddy'?['/plugins/dsh-codebuddy-cli-cn/status','/plugins/dsh-codebuddy-cli-intl/status']:['/plugins/dkn-agent/'+({codex:'cli',qoder:'qoder',zcode:'zcode',antigravity:'antigravity'}[provider])+'/status'];
           const values=await Promise.all(paths.map(async path=>{try{const r=await fetch(path,{cache:'no-store',signal:AbortSignal.timeout(6000)});if(!r.ok)throw new Error();return providerAvailability(project?'project':provider,await r.json())}catch{return {text:'不可用',tone:'bad'}}}));
           let value=values.find(v=>v.tone==='good')||values.find(v=>v.tone==='warn')||values.find(v=>v.text==='待配置')||values[0];
           if(values.length>1&&values.some(v=>v.tone==='good')&&!values.every(v=>v.tone==='good'))value={text:'部分可用',tone:'good'};

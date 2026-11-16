@@ -72,9 +72,9 @@ test('saved autostart reuses the hashed key and port conflicts are recoverable',
 }));
 
 test('queue limit and cancellation of queued work do not create hidden upstream calls',async()=>fixture(async({service,llm,request})=>{
-  let calls=0;llm.stream=async function*(options){calls++;await delay(10000,undefined,{signal:options.signal});yield{type:'finish',reason:{kind:'stop'}};};
+  const entered=Promise.withResolvers();let calls=0;llm.stream=async function*(options){calls++;entered.resolve();await delay(10000,undefined,{signal:options.signal});yield{type:'finish',reason:{kind:'stop'}};};
   const controller=new AbortController(),requests=[];for(let i=0;i<10;i++){const work=request(prompt(),{signal:controller.signal}).then(async res=>({status:res.status,body:await res.text()})).catch(()=>({status:'cancelled'}));requests.push(work);}
-  for(let i=0;i<100&&service.snapshot().queued<8;i++)await delay(10);assert.equal(service.snapshot().queued,8);assert.equal(calls,1);
+  await entered.promise;for(let i=0;i<100&&service.snapshot().queued<8;i++)await delay(10);assert.equal(service.snapshot().queued,8);assert.equal(calls,1);
   const first=await Promise.race(requests);assert.equal(first.status,429);controller.abort();await Promise.all(requests);for(let i=0;i<100&&(service.active||service.waiters.length);i++)await delay(10);assert.equal(service.snapshot().queued,0);assert.equal(calls,1);assert.equal(service.snapshot().active,0);
 }));
 
@@ -114,4 +114,8 @@ test('request cap accepts the exact boundary and returns structured 413 for leng
   const before=calls.length,overflow=exact+' ';const declared=await request(body,{body:overflow});assert.equal(declared.status,413);assert.equal((await declared.json()).error.code,'request_too_large');
   const chunked=await new Promise((resolve,reject)=>{const req=httpRequest(service.snapshot().baseUrl+'/chat/completions',{method:'POST',headers:{Authorization:'Bearer '+key,'Content-Type':'application/json'}},res=>{let raw='';res.setEncoding('utf8');res.on('data',chunk=>raw+=chunk);res.on('end',()=>resolve({status:res.statusCode,body:JSON.parse(raw)}));});req.on('error',reject);for(let i=0;i<overflow.length;i+=65536)req.write(overflow.slice(i,i+65536));req.end();});
   assert.equal(chunked.status,413);assert.equal(chunked.body.error.code,'request_too_large');assert.equal(calls.length,before);assert.equal((await request()).status,200);
+}));
+
+test('Antigravity API routing requires a fresh real-text verification in the current worker',async()=>fixture(async({service,llm})=>{
+  llm.listProviders=()=>[{id:'antigravity-acp',name:'Antigravity'}];await service.refreshModels();const row=service.snapshot().catalog[0];assert.equal(row.requiresVerification,true);assert.equal(row.streaming,'buffered');await service.control('save',{models:[row.id]});assert.equal(service.enabledModels().length,0);await service.verify(row.id);assert.equal(service.enabledModels().length,1);service.verified.set(row.id,Date.now()-31*60000);assert.equal(service.enabledModels().length,0);
 }));

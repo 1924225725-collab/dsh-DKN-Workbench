@@ -1,17 +1,21 @@
 # dsh-DKN-Workbench
 
-DKN 集成工作台是面向 DeepSeek Harness 的 Windows 插件（原名 DKN Agent）。在 DSH 中浏览和继续本机 Codex 项目对话，使用 Codex、CodeBuddy 和 ZCode 的 CLI 模型，通过 Qoder ACP 使用本机账号模型，并按项目组织 Agent 协作。当前为 `2.2.5`，适配 DSH `0.2.2-rc.1` / `0.2.2-rc.3`。
+DKN 集成工作台是面向 DeepSeek Harness 的 Windows 插件（原名 DKN Agent）。在 DSH 中浏览和继续本机 Codex 项目对话，使用 Codex、CodeBuddy 和 ZCode 的 CLI 模型，通过 Qoder ACP 使用本机账号模型，并按项目组织 Agent 协作。当前为 `2.2.6`，适配 DSH `0.2.2-rc.1` / `0.2.2-rc.3`。
 
 [下载最新版](https://github.com/1924225725-collab/dsh-DKN-Workbench/releases/latest) · [独立 CodeBuddy 版（国内 CLI）](https://github.com/1924225725-collab/dsh-codebuddy-cli-cn) · [English](README.en.md)
 
 
-2.2.5 修复 Electron 宿主下独立 Node 检测，缺少环境时提供可复制的 AI 部署提示词；API 保留完整配置展示，签到显示等待后台。同时为 DSH HTTP 路由补上宿主访问检查。见[运行环境说明](docs/background-environment.md)。
+2.2.6 修复 Electron 宿主下独立 Node 检测，缺少环境时提供可复制的 AI 部署提示词；API 保留完整配置展示，签到显示等待后台。同时为 DSH HTTP 路由补上宿主访问检查。见[运行环境说明](docs/background-environment.md)。
 
-## 2.2.5 独立后台与签到入口整理
+## 2.2.6 独立后台与签到入口整理
 
 API 与自动签到共用独立后台，插件作为统一配置入口。可选「退出 DSH 后继续运行」及「随 Windows 登录启动」，默认关闭；原 API 地址、Key、`dkn` 模型名及签到计划保留。签到只在「模型配置」展示，首页、额度页和各平台详情不再重复放签到区。
 
 需要保持后台运行，关机/休眠期间无法执行。平台 CLI 登录和套餐限制保持不变；卸载前请关闭自启并停止后台。详见[独立后台说明](docs/background-service.md)。
+
+## Antigravity ACP 通道
+
+2.2.6 增加 Antigravity 配置页和后台/API 路由。通道已接入，但本机真实请求仍被官方验证/地区资格限制拦截，不标为已验证可用。支持手动代理与 Windows 系统代理，不会自动切换 VPN 节点。见[接入说明](docs/antigravity-acp.md)。
 
 ## 安装与入口
 
@@ -22,6 +26,7 @@ API 与自动签到共用独立后台，插件作为统一配置入口。可选�
 | CodeBuddy 国内／国际 | 官方 CLI 模型、独立账号池、带账号名称的模型路由 | 官方积分余额；国内版支持手动签到与可选自动签到 |
 | Codex | CLI 模型提供方，以及完整 app-server 原生项目／对话模式 | 读取已连接账号的限额窗口，不提供签到 |
 | Qoder | 通过官方 CLI ACP 读取模型目录并在 DSH 对话中使用 | CLI 套餐／加量包额度；Windows 国际版桌面账号支持手动及可选自动领取每日奖励 |
+| Antigravity | 官方 CLI ACP 通道、模型目录、代理配置、真实回复测试及后台 API 路由 | 当前账号仍需官方验证；余额以官方客户端为准，无签到 |
 | ZCode | app-server 模型目录与流式对话，支持 Coding Plan／Start Plan 配置 | 对应通道的额度查询；活动领取尚未开放 |
 
 模型运行依赖本机已安装、已登录的官方 CLI／运行时，不附带第三方平台账号或免费额度。项目协作直接使用 DSH 工作区和已有对话。
@@ -40,7 +45,7 @@ API 与自动签到共用独立后台，插件作为统一配置入口。可选�
 
 支持自动发现注册表记录的自定义安装目录及版本目录；发现失败时，可在 Qoder 基础配置填写“每日奖励：桌面安装路径”。组件或身份不可用时明确提示原因，不再判为无活动。本机修复前后只读对比已确认：旧请求无活动，新请求显示可领取 100 Credits；本轮未执行真实领取。
 
-## 2.2.5 可选自动签到
+## 2.2.6 可选自动签到
 
 「模型配置」的「签到状态」中提供「自动签到」开关，默认关闭。开启后，每天北京时间 11:00–13:00 随机选择一个时间，依次检查 CodeBuddy 国内当前选中账号和 Qoder 国际桌面账号，仅领取确认可领取的每日奖励；其他号池账号不在自动范围内。
 
