@@ -32,6 +32,13 @@ page.on('pageerror',e=>{errors.push(e.message);console.error('Browser error:',e.
 try{
  await page.goto(`http://127.0.0.1:${server.address().port}`);
  await page.getByRole('dialog',{name:'感谢使用 DKN Workbench'}).waitFor();
+ const thanks=page.getByRole('dialog',{name:'感谢使用 DKN Workbench'});
+ assert.equal(await thanks.evaluate(node=>getComputedStyle(node).animationName),'dkn-dialog-enter');
+ await page.emulateMedia({reducedMotion:'reduce'});
+ assert.equal(await thanks.evaluate(node=>getComputedStyle(node).animationName),'none');
+ assert.equal(await page.locator('main').evaluate(node=>getComputedStyle(node).animationName),'none');
+ assert.equal(await thanks.locator('button').first().evaluate(node=>getComputedStyle(node).transitionDuration),'0s');
+ await page.emulateMedia({reducedMotion:'no-preference'});
  assert.equal(await page.getByRole('link',{name:'☆ 前往 GitHub',exact:true}).getAttribute('href'),'https://github.com/1924225725-collab/dsh-DKN-Workbench');
  await page.getByRole('button',{name:'继续使用',exact:true}).click();
  assert.equal(probes.length,0);
