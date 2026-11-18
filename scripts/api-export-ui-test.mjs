@@ -17,7 +17,7 @@ const html=`<!doctype html><meta charset="utf-8"><style>html,body,#app{height:10
 const server=createServer((req,res)=>{if(req.url.startsWith('/plugins/dkn-agent/'))return void handler(req,res);res.writeHead(200,{'Content-Type':'text/html; charset=utf-8'});res.end(html);});await new Promise(r=>server.listen(0,'127.0.0.1',r));
 const browser=await chromium.launch({headless:true,channel:'msedge'}),page=await browser.newPage({viewport:{width:1300,height:1000}}),errors=[];page.on('pageerror',e=>errors.push(e.message));
 try{
-  await page.goto('http://127.0.0.1:'+server.address().port);await page.getByRole('heading',{name:'API 服务',exact:true}).waitFor();
+  await page.goto('http://127.0.0.1:'+server.address().port);await page.getByRole('heading',{name:'API 服务',exact:true}).waitFor();if(await page.getByRole('dialog',{name:'感谢使用 DKN Workbench'}).count())await page.getByRole('button',{name:'继续使用',exact:true}).click();
   await page.getByLabel('路由到 qoder-acp/test-model',{exact:true}).waitFor();assert.equal(await page.getByLabel('路由到 zcode-cli/test-model',{exact:true}).isDisabled(),true);
   await page.getByRole('button',{name:'生成 API Key',exact:true}).click();const secret=await page.getByLabel('新 API Key',{exact:true}).inputValue();assert.match(secret,/^dkn_/);assert.equal(await page.getByLabel('新 API Key',{exact:true}).getAttribute('type'),'password');
   await page.getByLabel('路由到 qoder-acp/test-model',{exact:true}).check();await page.getByRole('button',{name:'保存并启动',exact:true}).click();await page.getByRole('button',{name:'停止服务',exact:true}).waitFor();
@@ -31,12 +31,37 @@ try{
   await page.evaluate(()=>{document.body.style.setProperty('--dsw-alias-bg-layer-1','#fff');document.body.style.setProperty('--dsw-alias-bg-layer-2','#f6f7fa');document.body.style.setProperty('--dsw-alias-bg-layer-3','#eef0f3');document.body.style.setProperty('--dsw-alias-label-primary','#202329');document.body.style.setProperty('--dsw-alias-label-secondary','#656b78');document.body.style.setProperty('--dsw-alias-border-l4','#d5d8df');});await page.screenshot({path:'research/ui/api-export-light.png'});
   await page.setViewportSize({width:460,height:900});assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);await page.screenshot({path:'research/ui/api-export-narrow.png'});
   await page.getByRole('button',{name:'停止服务',exact:true}).click();await page.getByRole('button',{name:'保存并启动',exact:true}).waitFor();assert.equal(apiExport.snapshot().running,false);
-  await page.getByRole('button',{name:'‹ 返回 DKN Agent',exact:true}).click();await page.getByText('返回工作台',{exact:true}).waitFor();await page.evaluate(()=>window.showApi());await page.getByRole('heading',{name:'API 服务',exact:true}).waitFor();assert.equal(await page.getByLabel('新 API Key',{exact:true}).count(),0);
+  await page.getByRole('button',{name:'工作台',exact:true}).click();await page.getByText('返回工作台',{exact:true}).waitFor();await page.evaluate(()=>window.showApi());await page.getByRole('heading',{name:'API 服务',exact:true}).waitFor();if(await page.getByRole('dialog',{name:'感谢使用 DKN Workbench'}).count())await page.getByRole('button',{name:'继续使用',exact:true}).click();assert.equal(await page.getByLabel('新 API Key',{exact:true}).count(),0);
   assert.deepEqual(errors,[]);assert.equal((await readFile(join(directory,'settings.json'),'utf8')).includes(secret),false);
+  // Exercise the live UI's observed-state transitions without issuing upstream requests.
+  let sceneState={...apiExport.snapshot(),running:true,active:0,queued:0,records:[{time:1,model:'zcode-cli/test-model',status:'success',elapsedMs:10}]};
+  let sceneOffline=false;
+  const mockScene=route=>sceneOffline?route.abort():route.fulfill({json:sceneState});
+  await page.route('**/plugins/dkn-agent/api-export/state',mockScene);
+  const mockAction=route=>route.fulfill({json:sceneState});
+  await page.route('**/plugins/dkn-agent/api-export/action',mockAction);
+  await page.reload();await page.getByRole('button',{name:'继续使用',exact:true}).click();
+  const scene=page.getByRole('region',{name:'模型路由动态'});
+  await scene.waitFor();assert.equal(await scene.getAttribute('data-phase'),'idle','old history must not replay success');
+  const showScene=async(patch,phase)=>{sceneState={...sceneState,...patch};await page.evaluate(()=>window.dispatchEvent(new Event('dkn-background-changed')));await page.waitForFunction(phase=>document.querySelector('.dkn-route-scene')?.dataset.phase===phase,phase);};
+  await showScene({queued:2},'queued');await showScene({active:1,queued:1},'working');
+  await scene.scrollIntoViewIfNeeded();await scene.screenshot({path:'research/ui/route-courier-working.png'});
+  await page.getByRole('button',{name:'暂停动画',exact:true}).click();assert.equal(await scene.getAttribute('data-paused'),'true');
+  assert.equal(await scene.locator('.dkn-courier').evaluate(el=>getComputedStyle(el).animationPlayState),'paused');
+  await page.reload();await page.getByRole('button',{name:'继续使用',exact:true}).click();await scene.waitFor();assert.equal(await scene.getAttribute('data-paused'),'true');await page.getByRole('button',{name:'播放动画',exact:true}).click();
+  await page.emulateMedia({reducedMotion:'reduce'});assert.equal(await scene.locator('.dkn-courier').evaluate(el=>getComputedStyle(el).animationName),'none');await page.emulateMedia({reducedMotion:'no-preference'});
+  await showScene({active:0,queued:0,records:[{time:2,model:'zcode-cli/test-model',status:'success',elapsedMs:20}]},'success');
+  await showScene({records:[{time:3,model:'zcode-cli/test-model',status:'upstream_error',elapsedMs:30}]},'error');
+  await scene.screenshot({path:'research/ui/route-courier-error.png'});
+  await showScene({models:['qoder-acp/test-model']},'idle');assert.match(await scene.textContent(),/Qoder/);
+  sceneOffline=true;await page.evaluate(()=>window.dispatchEvent(new Event('dkn-background-changed')));await page.waitForFunction(()=>document.querySelector('.dkn-route-scene')?.dataset.phase==='unknown');
+  sceneOffline=false;await showScene({running:false},'stopped');
+  await page.setViewportSize({width:390,height:850});assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);await scene.screenshot({path:'research/ui/route-courier-narrow.png'});
+  await page.unroute('**/plugins/dkn-agent/api-export/state',mockScene);await page.unroute('**/plugins/dkn-agent/api-export/action',mockAction);
   const offline={...apiExport.snapshot(),port:18789,baseUrl:'http://127.0.0.1:18789/v1',runtimeUnavailable:true,running:false,lastError:'未检测到独立 Node.js'};const prompt=backgroundDeploymentPrompt('C:/synthetic/workbench');
   await page.route('**/plugins/dkn-agent/background/state',route=>route.fulfill({json:{running:false,keepAlive:false,autoStart:false,runtime:{state:'missing',message:'未检测到独立 Node.js 24.9+'},deploymentPrompt:prompt}}));
   await page.route('**/plugins/dkn-agent/api-export/state',route=>route.fulfill({json:offline}));await page.route('**/plugins/dkn-agent/api-export/action',route=>route.fulfill({json:offline}));
-  await page.reload();await page.getByRole('heading',{name:'连接与启停',exact:true}).waitFor();await page.getByRole('heading',{name:'API Key',exact:true}).waitFor();assert.equal(await page.getByLabel('端口',{exact:true}).inputValue(),'18789');assert.equal(await page.getByText('正在读取 API 服务设置…',{exact:true}).count(),0);assert.equal(await page.getByRole('button',{name:'保存设置',exact:true}).isDisabled(),true);
+  await page.reload();await page.getByRole('button',{name:'继续使用',exact:true}).click();await page.getByRole('heading',{name:'连接与启停',exact:true}).waitFor();await page.getByRole('heading',{name:'API Key',exact:true}).waitFor();assert.equal(await page.getByLabel('端口',{exact:true}).inputValue(),'18789');assert.equal(await page.getByText('正在读取 API 服务设置…',{exact:true}).count(),0);assert.equal(await page.getByRole('button',{name:'保存设置',exact:true}).isDisabled(),true);
   await page.evaluate(()=>Object.defineProperty(navigator,'clipboard',{value:{writeText:async text=>{window.copiedDeploymentPrompt=text}},configurable:true}));await page.getByRole('button',{name:'复制 AI 部署提示词',exact:true}).click();await page.getByRole('button',{name:'已复制部署提示词',exact:true}).waitFor();assert.equal(await page.evaluate(()=>window.copiedDeploymentPrompt),prompt);await page.getByText('查看部署提示词',{exact:true}).click();assert.equal(await page.getByLabel('后台环境部署提示词',{exact:true}).inputValue(),prompt);
   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);await page.screenshot({path:'research/ui/api-runtime-missing.png',fullPage:true});assert.deepEqual(errors,[]);console.log('API UI passed: routing, keys, verification, light/dark/narrow, missing-runtime saved settings and AI deployment prompt copy. Synthetic model replies only.');
 }finally{await browser.close();await new Promise(r=>server.close(r));await apiExport.close();await rm(directory,{recursive:true,force:true});}

@@ -32,15 +32,15 @@
       const toggle=async enabled=>{const previous=value;setValue(old=>({...old,enabled}));setBusy(true);setError('');try{setValue(await codexApi('auto-checkin',{enabled}))}catch{setValue(previous);setError('自动签到设置保存失败，请重试')}finally{setBusy(false)}};
       const time=stamp=>new Date(stamp).toLocaleString('zh-CN',{timeZone:'Asia/Shanghai',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hour12:false});
       const labels={claimed:'已领取',claimable:'待领取','no-activity':'无活动','not-eligible':'不符合资格',expired:'活动结束','not-started':'未开始','login-required':'需要登录','client-required':'缺少桌面身份',unavailable:'未接入',error:'失败',unknown:'结果待核对'};
-      return h('div',{style:{borderTop:'1px solid var(--dsw-alias-border-l4)',paddingTop:10,display:'grid',gap:6}},
-        h('label',{style:{display:'flex',gap:8,alignItems:'center'}},h('input',{type:'checkbox','aria-label':'自动签到',checked:value?.enabled===true,disabled:busy||!value||value.backgroundReady===false,onChange:e=>toggle(e.target.checked)}),'自动签到'),
-        h('small',{style:{opacity:.7}},'每天 11:00–13:00（北京时间）随机一次。覆盖 CodeBuddy 国内当前账号、Qoder 国际桌面账号；错过等次日，结果不确定不重试。'),
+      return h('div',{className:'wb-auto-checkin',style:{borderTop:'1px solid var(--dsw-alias-border-l4)',paddingTop:10,display:'grid',gap:6}},
+        h(SettingsControlsStyles),h(SettingsToggle,{label:'自动签到',checked:value?.enabled===true,disabled:busy||!value||value.backgroundReady===false,onChange:e=>toggle(e.target.checked)}),
+        h('small',{style:{opacity:.7}},'每天 11:00–13:00（北京时间）随机一次。覆盖 CodeBuddy 国内当前账号、Qoder 国际桌面账号；TRAE 需在其配置页单独开启；错过等次日，结果不确定不重试。'),
         value?.enabled&&value.scheduledAt?h('small',{role:'status'},value.running?'自动签到正在执行…':'下次计划：'+time(value.scheduledAt)+'（北京时间）'):null,
-        value?.lastRun?h('small',{role:'status'},'上次执行：'+time(value.lastRun.at)+' · '+Object.entries(value.lastRun.results||{}).map(([id,state])=>(id==='codebuddy'?'CodeBuddy':'Qoder')+' '+(labels[state]||'待核对')).join(' · ')):null,
+        value?.lastRun?h('small',{role:'status'},'上次执行：'+time(value.lastRun.at)+' · '+Object.entries(value.lastRun.results||{}).map(([id,state])=>(id==='codebuddy'?'CodeBuddy':id==='trae'?'TRAE CN':'Qoder')+' '+(labels[state]||'待核对')).join(' · ')):null,
         error||value?.error?h('small',{role:'alert'},error||value.error):null);
     }
     function CheckinOverview(){
-      const targets=[{id:'codebuddy',label:'CodeBuddy 国内',url:apiRoot+'rewards/checkin?provider=codebuddy',header:'x-dkn-action'},{id:'qoder',label:'Qoder 国际',url:apiRoot+'rewards/checkin?provider=qoder',header:'x-dkn-action'}];
+      const targets=[{id:'trae',label:'TRAE CN',url:apiRoot+'rewards/checkin?provider=trae',header:'x-dkn-action'},{id:'codebuddy',label:'CodeBuddy 国内',url:apiRoot+'rewards/checkin?provider=codebuddy',header:'x-dkn-action'},{id:'qoder',label:'Qoder 国际',url:apiRoot+'rewards/checkin?provider=qoder',header:'x-dkn-action'}];
       const [rows,setRows]=React.useState({}),[busy,setBusy]=React.useState(false),[result,setResult]=React.useState('');
       const lock=React.useRef(false),generation=React.useRef(0);
       const labels={'background-required':'等待后台就绪',claimable:'可签到',claimed:'当前周期已领取','no-activity':'当前无每日活动','not-eligible':'不符合领取资格',expired:'活动已结束','not-started':'尚未开始','login-required':'需要登录','client-required':'需要官方桌面身份',unavailable:'状态未确认',error:'查询失败',unknown:'结果待核对'};
@@ -67,7 +67,7 @@
         }finally{lock.current=false;setBusy(false);window.dispatchEvent(new Event('dkn-rewards-changed'))}
       };
       const available=targets.filter(target=>rows[target.id]?.state==='claimable').length;
-      return h('section',{'aria-label':'签到状态',style:{maxWidth:960,margin:'16px 0 24px',padding:16,border:'1px solid var(--dsw-alias-border-l4)',borderRadius:10,background:'var(--dsw-alias-bg-layer-2)',display:'grid',gap:10}},
+      return h('section',{className:'wb-checkin','aria-label':'签到状态',style:{maxWidth:960,margin:'16px 0 24px',padding:16,border:'1px solid var(--dsw-alias-border-l4)',borderRadius:10,background:'var(--dsw-alias-bg-layer-2)',display:'grid',gap:10}},
         h('div',{style:{display:'flex',alignItems:'center',justifyContent:'space-between',gap:12,flexWrap:'wrap'}},h('strong',null,'签到状态'),h('div',{style:{display:'flex',gap:8}},settingsControl('button',{type:'button',disabled:busy,onClick:refresh},'刷新状态'),settingsControl('button',{type:'button',disabled:busy||!available,onClick:run},busy?'正在签到…':'一键签到'))),
         h('div',{style:{display:'flex',gap:16,flexWrap:'wrap'},role:'status'},...targets.map(target=>h('span',{key:target.id,title:rows[target.id]?.message||'',style:{color:rows[target.id]?.state==='claimed'?'#3ca978':'inherit'}},target.label+'：'+(labels[rows[target.id]?.state]||'正在查询…')))),
         h('small',{style:{opacity:.65}},'领取当前账号的每日奖励，已领取或无活动自动跳过。'),

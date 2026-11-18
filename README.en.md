@@ -115,3 +115,7 @@ Open DKN Agent → API service to generate one key and select one backend model.
 ## Antigravity ACP (2.2.6)
 
 Adds a provider settings page, model catalogue, per-provider proxy settings and background/API routing. The current test account remains blocked by official verification/eligibility checks; adding the provider is not a claim that live generation passed. API export requires a successful text probe in the current worker. See [guide](docs/antigravity-acp.md).
+
+## TRAE CN personal desktop integration (2.3.2)
+
+TRAE CN reuses the current local desktop sign-in without the enterprise-only CLI. Includes a live unlocked model catalogue, account-declared reasoning efforts, remaining credits, daily reward status/manual claims, opt-in automatic check-in, unified settings and the existing single-model API/background bridge. Actual DeepSeek Flash text and API model `dkn` returned OK in local testing. Images/files and DSH tool-call bridging are not supported. See [integration notes](docs/trae-cn.md) and the MIT attribution in NOTICE.md.

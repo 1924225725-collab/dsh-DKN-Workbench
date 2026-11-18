@@ -1260,6 +1260,7 @@ window.__ModuleLoader__.load({
         officialHome: id === 'cn' ? 'https://www.codebuddy.cn' : 'https://www.codebuddy.ai',
         t: id === 'cn' ? t : ctx.locale.bind('settings.codebuddy-cli-intl-unified')
       }}))
+      DKN_CODEBUDDY_REGIONS=regions;DKN_CODEBUDDY_T=t
       const openPage = () => ctx.layout.selectPanel(PANEL_ID)
       ctx.effect(() => ctx.configForms.whileServed(regions.map(region => region.ns), () => {
         const disposers = [

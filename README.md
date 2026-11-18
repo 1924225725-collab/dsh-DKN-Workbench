@@ -1,11 +1,15 @@
 # dsh-DKN-Workbench
 
-DKN 集成工作台是面向 DeepSeek Harness 的 Windows 插件（原名 DKN Agent）。在 DSH 中浏览和继续本机 Codex 项目对话，使用 Codex、CodeBuddy 和 ZCode 的 CLI 模型，通过 Qoder ACP 使用本机账号模型，并按项目组织 Agent 协作。当前为 `2.2.6`，适配 DSH `0.2.2-rc.1` / `0.2.2-rc.3`。
+DKN 集成工作台是面向 DeepSeek Harness 的 Windows 插件（原名 DKN Agent）。在 DSH 中浏览和继续本机 Codex 项目对话，使用 Codex、CodeBuddy 和 ZCode 的 CLI 模型，通过 Qoder ACP 使用本机账号模型，并按项目组织 Agent 协作。当前源码为 `2.3.2`，适配 DSH `0.2.2-rc.1` / `0.2.2-rc.3`。
 
 [下载最新版](https://github.com/1924225725-collab/dsh-DKN-Workbench/releases/latest) · [独立 CodeBuddy 版（国内 CLI）](https://github.com/1924225725-collab/dsh-codebuddy-cli-cn) · [English](README.en.md)
 
 
 2.2.6 修复 Electron 宿主下独立 Node 检测，缺少环境时提供可复制的 AI 部署提示词；API 保留完整配置展示，签到显示等待后台。同时为 DSH HTTP 路由补上宿主访问检查。见[运行环境说明](docs/background-environment.md)。
+
+## TRAE CN 国内个人版
+
+2.3.2 新增 TRAE CN 桌面账号接入：动态模型目录、推理档位、额度、签到、可选自动签到、统一API与后台路由。无需企业CLI；文本真实对话和统一model=dkn网关已收到OK。图片/文件与DSH工具桥接尚未支持，其他模型未逐一验证。见[接入说明](docs/trae-cn.md)。
 
 ## 2.2.6 独立后台与签到入口整理
 
