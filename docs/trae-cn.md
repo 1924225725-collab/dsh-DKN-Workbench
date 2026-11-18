@@ -22,4 +22,3 @@ TRAE 个人版使用桌面远程会话接口，不是企业 CLI ACP。当前接�
 - 官方CLI权益：https://docs.trae.cn/cli_about-trae-code-cli-2
 - MIT协议参考：https://github.com/marsma-101/dsh-trae-connect （许可证lib/trae/LICENSE）
 - 签到字段参考：https://github.com/Maquer/trae-signin
-
