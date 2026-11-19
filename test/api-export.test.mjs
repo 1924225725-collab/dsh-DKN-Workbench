@@ -7,6 +7,14 @@ import {setTimeout as delay} from 'node:timers/promises';
 import {ApiExportService,validateApiRequest,API_REQUEST_LIMIT} from '../lib/api-export-service.js';
 import {request as httpRequest} from 'node:http';
 const prompt=()=>({model:'dkn',messages:[{role:'user',content:'Only synthetic text'}]});
+test('HTTP API gates image capabilities and forwards per-request bytes through JSON and SSE',async()=>fixture(async({service,llm,request,calls})=>{
+  const image='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jC1sAAAAASUVORK5CYII=';
+  const body={model:'dkn',messages:[{role:'user',content:[{type:'image_url',image_url:{url:image}}]}]};
+  assert.equal((await request(body)).status,400);assert.equal(calls.length,0);
+  llm.listModels=async()=>[{id:'test',name:'Synthetic',inputModalities:['text','image']}];await service.refreshModels();
+  for(const stream of [false,true]){const response=await request({...body,stream});assert.equal(response.status,200);await response.text();const call=calls.at(-1),ref=call.messages[0].content[0].attachment;const version=await call.imageAttachments.readImageRequest(ref);assert.equal(version.data.toString('base64'),image.split(',')[1]);}
+  await assert.rejects(calls[1].imageAttachments.readImageRequest(calls[0].messages[0].content[0].attachment));
+}));
 async function fixture(fn){
   const directory=await mkdtemp(join(tmpdir(),'dkn-api-test-')),calls=[];
   const llm={listProviders:()=>[{id:'qoder-acp',name:'Qoder'},{id:'zcode-cli',name:'ZCode'},{id:'dkn-codex-agent',name:'Native projects'}],listModels:async()=>[{id:'test',name:'Synthetic'}],async *stream(options){calls.push(options);yield{type:'text-delta',index:0,text:'API_'};yield{type:'text-delta',index:0,text:'OK'};yield{type:'block-end',index:0,block:{type:'text',text:'API_OK'}};yield{type:'block-end',index:1,block:{type:'text',text:'!'}};yield{type:'finish',reason:{kind:'stop'}};}};

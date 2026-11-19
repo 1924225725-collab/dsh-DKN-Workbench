@@ -119,3 +119,5 @@ Adds a provider settings page, model catalogue, per-provider proxy settings and 
 ## TRAE CN personal desktop integration (2.3.2)
 
 TRAE CN reuses the current local desktop sign-in without the enterprise-only CLI. Includes a live unlocked model catalogue, account-declared reasoning efforts, remaining credits, daily reward status/manual claims, opt-in automatic check-in, unified settings and the existing single-model API/background bridge. Actual DeepSeek Flash text and API model `dkn` returned OK in local testing. Images/files and DSH tool-call bridging are not supported. See [integration notes](docs/trae-cn.md) and the MIT attribution in NOTICE.md.
+
+Version 2.3.3 adds image input for Qoder ACP, Codex CLI and native Codex projects, plus PNG/JPEG Base64 images through the single API model. Live shape recognition passed on Qoder, Codex CLI/native projects and CodeBuddy CN. Antigravity image transport is implemented but account eligibility blocks live acceptance. TRAE remote image experiments failed, so its adapter remains text-only. See docs/input-capabilities.md.

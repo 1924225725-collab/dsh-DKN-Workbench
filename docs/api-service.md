@@ -30,7 +30,7 @@ Invoke-RestMethod -Uri 'http://127.0.0.1:18789/v1/chat/completions' `
 
 `stream: true` 返回 SSE，成功结束包含 `finish_reason: stop` 和 `[DONE]`。部分 CLI（包括当前 Codex 命令模式、CodeBuddy 结构化适配）先生成完整回复再返回；不会通过拆字伪造上游流式。流式中途失败会返回 error 事件，没有成功 stop，客户端必须检查 error，不能仅以 HTTP 200 或 `[DONE]` 判断成功。
 
-首版范围：文本 system/user/assistant 消息，JSON/SSE，一次返回一条回复。最后一条需为非空 user 消息。图片、文件、自定义工具调用以及 temperature 等未兼容参数会明确报错，不静默忽略；不伪造 Token 用量和费用。提供方仍使用自己的 CLI 登录态和套餐，不会导出官方账号凭据。Codex 遵循只读沙箱；本入口不执行 API 自定义工具。
+当前范围：文本 system/user/assistant 消息、user 消息中的 PNG/JPEG Base64 image_url 图片，JSON/SSE，一次返回一条回复。最后一条需为非空 user 消息（文字或图片）。图片要求后台模型声明支持，最多5张、单张2 MiB、最长边1920像素，Base64合计8 MiB；不读取远程图片网址或本地路径。文件、自定义工具调用以及 temperature 等未兼容参数会明确报错，不静默忽略；不伪造 Token 用量和费用。提供方仍使用自己的 CLI 登录态和套餐，不会导出官方账号凭据。Codex 遵循只读沙箱；本入口不执行 API 自定义工具。
 
 可配置最大并发 1–4（默认 1）、超时 1–300 秒（默认 90 秒）。最多另排队 8 条请求，队满返回 429。客户端断开、停止服务、更换 Key 或移除导出模型会取消相关请求。取消不保证平台不计费，不会自动重发。API 请求使用独立会话和临时工作目录，不续接现有项目对话；请求结束后清理工作目录。
 
@@ -46,4 +46,4 @@ API 专用的 Codex 请求使用 `--ephemeral`，避免写入正常 Codex 会话
 
 WorkBuddy 的测试连接会固定发送 max_tokens: 1。2.2.0 起接受正整数 max_tokens 或 max_completion_tokens（只能选一个，1–131072）。该预算会传递给适配器；对于不能精确控制生成 Token 的 CLI，网关按同值的 UTF-8 字节上限保守截断输出，保持 Unicode 完整，触及预算时取消上游并返回 finish_reason: length。它不代表精确 Token 计数，不保证约束上游已生成的 Token 或费用；短探测可能仅收到一个字母，仍是实际模型返回内容，不会伪造 OK。
 
-WorkBuddy 的自定义模型供应商选择 OpenAI 兼容方式，URL 填 API 服务的 Base URL，Key 填生成的密钥，模型名填 `dkn`（或已保存的自定义名称）。首版请不要开启工具调用或图片能力。被拒绝的请求记录 HTTP 状态及错误分类，便于区别密钥、模型路由和参数问题，不记录请求内容或 Key。
+WorkBuddy 的自定义模型供应商选择 OpenAI 兼容方式，URL 填 API 服务的 Base URL，Key 填生成的密钥，模型名填 `dkn`（或已保存的自定义名称）。请不要开启自定义工具调用；图片能力仅在后台目标支持时可用。被拒绝的请求记录 HTTP 状态及错误分类，便于区别密钥、模型路由和参数问题，不记录请求内容或 Key。

@@ -25,3 +25,7 @@
 - https://antigravity.google/docs/cli/install
 - https://antigravity.google/docs/cli/acp
 - https://antigravity.google/docs/install/
+
+## 2.3.3 图片输入
+
+按官方 ACP 初始化声明启用原生图片块，复用 DSH 附件转换预算。代码通道已适配，本机真实测试被官方账号资格检查拒绝，未收到有效识图回复，不能视为图片实测通过。

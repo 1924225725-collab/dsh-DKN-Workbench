@@ -35,6 +35,7 @@
       const visible=rows.filter(child=>{if(tab==='全部')return true;const name=child.props?.title;if(!name)return true;return tab==='配置'?/配置|模型|授权|登录|路径|运行时/.test(name):/状态|测试|诊断|连接/.test(name)});
       return h(WorkbenchPage,{ctx,title:title||providerNames[provider],provider,active:project?'project':'models',subtitle:project?'原生项目与本机运行时':'连接、配置与验证，在同一个工作区完成',activity:pending,activityLabel:pending?'正在处理，稍等一下':'准备好帮你连接'},
         h('div',{className:'wp-toolbar'},h(ProviderStatus,{provider,project}),!project?h(ProviderVerify,{provider}):null,settingsControl('button',{type:'button',onClick:()=>provider==='antigravity'?window.open('https://antigravity.google/','_blank','noopener'):openProviderQuota(ctx,provider)},provider==='antigravity'?'官方账号与额度':'额度与用量')),
+        h('p',{style:{fontSize:12,opacity:.72}},provider==='trae'?'输入：文字 · 图片暂未适配':provider==='codebuddy'?'输入：文字 · 图片（取决于模型目录声明）':provider==='qoder'||provider==='antigravity'?'输入：文字 · 图片（按当前 ACP 能力启用）':'输入：文字 · 图片', '；原始文件附件暂未适配。连接验证仅测试文字。'),
         h('nav',{className:'wp-tabs','aria-label':'配置内容',style:{marginTop:20}},...['全部','配置','验证'].map(name=>settingsControl('button',{key:name,type:'button','aria-pressed':tab===name,onClick:()=>setTab(name)},name))),h('div',{className:'wp-provider-body'},visible));
     }
     function QuotaWorkbench({ctx,quota,quotaBusy,quotaError,selected,setSelected,refreshQuota,detail,flag,snapshot}){
