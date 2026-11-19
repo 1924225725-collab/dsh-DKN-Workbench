@@ -22,6 +22,8 @@ function fakeAsar(){
 
 const rc3Client='const slots={children:{"sidebar.workspaces.directoryFlow":{}}};function view(){return jsx("div",{ref:wide?bindScrollerRef:void 0,className:WorkspaceBrowser_module_css_default.listArea,"data-sidebar-list-area":``,children:wide&&(jsx(SessionTree,{home,t}))}),workspaceActionRequest!==null&&null}';
 
+test('rc5 installs an idempotent slot and refuses an unknown layout',()=>{const patched=patchDshWorkspaceClient('0.2.2-rc.5',rc3Client);assert.ok(patched);new Script(patched);assert.equal(patchDshWorkspaceClient('0.2.2-rc.5',patched),patched);assert.equal(patchDshWorkspaceClient('0.2.2-rc.5',rc3Client.replace('bindScrollerRef','unknownRef')),undefined);});
+
 test('rc3 keeps the native scroll reference and installs one idempotent sidebar slot',()=>{
   const patched=patchDshWorkspaceClient('0.2.2-rc.3',rc3Client);
   assert.ok(patched);
