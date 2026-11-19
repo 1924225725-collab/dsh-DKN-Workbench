@@ -1,17 +1,17 @@
     let DKN_CODEBUDDY_REGIONS,DKN_CODEBUDDY_T;
-    let workbenchStyleMemory='illustrated';
+    let workbenchStyleMemory='simple';
     const workbenchStyleKey='dkn-workbench:visual-style';
     function useWorkbenchStyle(){
-      const read=()=>{try{return localStorage.getItem(workbenchStyleKey)==='classic'?'classic':localStorage.getItem(workbenchStyleKey)==='illustrated'?'illustrated':workbenchStyleMemory}catch{return workbenchStyleMemory}};
+      const read=()=>{try{return localStorage.getItem(workbenchStyleKey)==='simple'?'simple':localStorage.getItem(workbenchStyleKey)==='illustrated'?'illustrated':workbenchStyleMemory}catch{return workbenchStyleMemory}};
       const [style,setStyle]=React.useState(read);
       React.useEffect(()=>{const update=()=>setStyle(read());window.addEventListener('dkn-style-changed',update);window.addEventListener('storage',update);return()=>{window.removeEventListener('dkn-style-changed',update);window.removeEventListener('storage',update)}},[]);
       return [style,value=>{workbenchStyleMemory=value;try{localStorage.setItem(workbenchStyleKey,value)}catch{}setStyle(value);window.dispatchEvent(new Event('dkn-style-changed'))}];
     }
-    function StylePicker(){const [style,setStyle]=useWorkbenchStyle();return h('label',{className:'dkn-style-picker'},h('span',null,'界面风格'),settingsControl('select',{'aria-label':'界面风格',value:style,onChange:event=>setStyle(event.target.value)},h('option',{value:'illustrated'},'插画工作台'),h('option',{value:'classic'},'简洁经典')));}
+    function StylePicker(){const [style,setStyle]=useWorkbenchStyle();return h('label',{className:'dkn-style-picker'},h('span',null,'界面风格'),settingsControl('select',{'aria-label':'界面风格',value:style,onChange:event=>setStyle(event.target.value)},h('option',{value:'simple'},'简洁'),h('option',{value:'illustrated'},'插画工作台')));}
     function WorkbenchSkin(){
       const [style]=useWorkbenchStyle(),ref=React.useRef();
       React.useEffect(()=>{const root=ref.current?.closest('main');if(root)root.dataset.workbenchStyle=style;return()=>{if(root)delete root.dataset.workbenchStyle}},[style]);
-      return h('style',{ref},WORKBENCH_SHELL_CSS);
+      return h('style',{ref},WORKBENCH_SHELL_CSS+SIMPLE_WORKBENCH_CSS);
     }
     const WORKBENCH_SHELL_CSS=`
       .dkn-style-picker{display:inline-flex;align-items:center;gap:8px;font-size:12px;white-space:nowrap;margin-left:auto;color:var(--dsw-alias-label-secondary)}.dkn-style-picker select{width:auto;padding:5px 8px!important;font-size:12px!important}

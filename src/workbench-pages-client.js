@@ -1,4 +1,5 @@
     function IdleCompanion({active=false,label='等待操作'}){
+      const [style]=useWorkbenchStyle();if(style==='simple')return h('div',{className:'wp-companion sw-status-orb','data-active':active},h(LightCompanion,{active,label}),h('span',{className:'wp-companion-note'},label));
       return h('div',{className:'wp-companion','data-active':active,'aria-label':label},
         DKN_WORKBENCH_ART.idle?h('div',{className:'wp-idle',style:{backgroundImage:`url(${DKN_WORKBENCH_ART.idle})`,aspectRatio:DKN_WORKBENCH_ART.idleAspect},'aria-hidden':true}):null,
         h('span',{className:'wp-companion-note'},active?h('i',{className:'wp-dots','aria-hidden':true},h('b'),h('b'),h('b')):null,label));
@@ -30,13 +31,21 @@
       return child.props.disabled&&/^(正在|处理中|检测中|等待|保存中)/.test(text)||pendingWorkbenchAction(child.props.children);
     });}
     function ProviderWorkbench({ctx,provider,title,project,children}){
-      const [tab,setTab]=React.useState('全部');
-      const rows=React.Children.toArray(children),pending=pendingWorkbenchAction(children);
-      const visible=rows.filter(child=>{if(tab==='全部')return true;const name=child.props?.title;if(!name)return true;return tab==='配置'?/配置|模型|授权|登录|路径|运行时/.test(name):/状态|测试|诊断|连接/.test(name)});
+      const [tab,setTab]=React.useState('连接');
+      const textOf=node=>typeof node==='string'?node:React.isValidElement(node)?React.Children.toArray(node.props.children).map(textOf).join(' '):'';
+      const fieldGroup=node=>{const text=textOf(node);return /超时|工作目录|数据目录|代理|权限|重试|上下文|环境变量/.test(text)?'高级':/模型|model/i.test(text)?'模型':'连接';};
+      const rows=React.Children.toArray(children).flatMap(card=>{
+        if(!/配置|完整/.test(card.props?.title||'')||/登录/.test(card.props?.title||''))return[card];
+        const fields=React.Children.toArray(card.props.children).flatMap(item=>React.isValidElement(item)&&item.type==='div'&&React.Children.toArray(item.props.children).some(field=>field?.type==='label')?React.Children.toArray(item.props.children):[item]);
+        if(!fields.some(field=>field?.type==='label'))return[card];
+        return ['连接','模型','高级'].map(group=>{const items=fields.filter(field=>fieldGroup(field)===group);return items.length?h(SettingsCard,{key:(card.props.title||'')+group,title:group==='连接'?'连接设置':group==='模型'?'模型设置':'高级参数'},...items):null;}).filter(Boolean);
+      }),pending=pendingWorkbenchAction(children);
+      const category=child=>{const name=child.props?.title||'';return /额度|用量|签到|奖励/.test(name)?'用量':/模型/.test(name)?'模型':/配置|目录|路径|超时|权限|参数|高级|完整/.test(name)&&!/登录|授权|安装/.test(name)?'高级':'连接';};
+      const visible=rows.filter(child=>category(child)===tab);
       return h(WorkbenchPage,{ctx,title:title||providerNames[provider],provider,active:project?'project':'models',subtitle:project?'原生项目与本机运行时':'连接、配置与验证，在同一个工作区完成',activity:pending,activityLabel:pending?'正在处理，稍等一下':'准备好帮你连接'},
         h('div',{className:'wp-toolbar'},h(ProviderStatus,{provider,project}),!project?h(ProviderVerify,{provider}):null,settingsControl('button',{type:'button',onClick:()=>provider==='antigravity'?window.open('https://antigravity.google/','_blank','noopener'):openProviderQuota(ctx,provider)},provider==='antigravity'?'官方账号与额度':'额度与用量')),
         h('p',{style:{fontSize:12,opacity:.72}},provider==='trae'?'输入：文字 · 图片暂未适配':provider==='codebuddy'?'输入：文字 · 图片（取决于模型目录声明）':provider==='qoder'||provider==='antigravity'?'输入：文字 · 图片（按当前 ACP 能力启用）':'输入：文字 · 图片', '；原始文件附件暂未适配。连接验证仅测试文字。'),
-        h('nav',{className:'wp-tabs','aria-label':'配置内容',style:{marginTop:20}},...['全部','配置','验证'].map(name=>settingsControl('button',{key:name,type:'button','aria-pressed':tab===name,onClick:()=>setTab(name)},name))),h('div',{className:'wp-provider-body'},visible));
+        provider==='codebuddy'?null:h('nav',{className:'wp-tabs','aria-label':'配置内容',style:{marginTop:20}},...['连接','模型','用量','高级'].map(name=>settingsControl('button',{key:name,type:'button','aria-pressed':tab===name,onClick:()=>setTab(name)},name))),h('div',{className:'wp-provider-body wp-tabs-content',key:tab},provider==='codebuddy'?children:visible.length?visible:tab==='用量'?h('section',{className:'sw-empty'},h('p',null,'查看当前账号的余额、套餐和限额。'),settingsControl('button',{type:'button',onClick:()=>provider==='antigravity'?window.open('https://antigravity.google/','_blank','noopener'):openProviderQuota(ctx,provider)},'查看账号用量')):h('p',{className:'sw-empty'},tab==='模型'?'模型由当前 CLI 账号提供，此平台没有额外的模型配置。':'此平台没有单独的'+tab+'设置。')));
     }
     function QuotaWorkbench({ctx,quota,quotaBusy,quotaError,selected,setSelected,refreshQuota,detail,flag,snapshot}){
       const rows=[['codebuddy','CodeBuddy'],['deepseek','DeepSeek'],['codex','Codex'],['qoder','Qoder'],['zcode','ZCode'],['trae','TRAE CN']];

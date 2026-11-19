@@ -71,5 +71,5 @@
         h('div',{style:{display:'flex',alignItems:'center',justifyContent:'space-between',gap:12,flexWrap:'wrap'}},h('strong',null,'签到状态'),h('div',{style:{display:'flex',gap:8}},settingsControl('button',{type:'button',disabled:busy,onClick:refresh},'刷新状态'),settingsControl('button',{type:'button',disabled:busy||!available,onClick:run},busy?'正在签到…':'一键签到'))),
         h('div',{style:{display:'flex',gap:16,flexWrap:'wrap'},role:'status'},...targets.map(target=>h('span',{key:target.id,title:rows[target.id]?.message||'',style:{color:rows[target.id]?.state==='claimed'?'#3ca978':'inherit'}},target.label+'：'+(labels[rows[target.id]?.state]||'正在查询…')))),
         h('small',{style:{opacity:.65}},'领取当前账号的每日奖励，已领取或无活动自动跳过。'),
-        result?h('div',{role:'status'},result):null,h(BackgroundControls),h(AutoCheckinToggle));
+        result?h('div',{role:'status'},result):null);
     }

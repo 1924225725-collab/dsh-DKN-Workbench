@@ -1,7 +1,7 @@
     const API_PANEL='dkn-api-service';
     function ApiServicePage({ctx}){
       const [visual]=useWorkbenchStyle(),[active,setActive]=React.useState(false);
-      return visual==='illustrated'?h(WorkbenchPage,{ctx,title:'API 服务',subtitle:'统一入口、一个模型名，实际目标由你配置',active:'api',activity:active,activityLabel:active?'正在处理，马上回来':'等待你的操作'},h('div',{className:'wp-api-body'},h(ApiServicePageContent,{ctx,onActivity:setActive}))):h(ApiServicePageContent,{ctx});
+      return visual!=='classic'?h(WorkbenchPage,{ctx,title:'API 服务',subtitle:'统一入口、一个模型名，实际目标由你配置',active:'api',activity:active,activityLabel:active?'正在处理，马上回来':'等待你的操作'},h('div',{className:'wp-api-body'},h(ApiServicePageContent,{ctx,onActivity:setActive}))):h(ApiServicePageContent,{ctx});
     }
     function ApiServicePageContent({ctx,onActivity}){
       const [state,setState]=React.useState(null),[draft,setDraft]=React.useState(null),[busy,setBusy]=React.useState(false),[error,setError]=React.useState(''),[secret,setSecret]=React.useState(''),[visible,setVisible]=React.useState(false),[filter,setFilter]=React.useState(''),[test,setTest]=React.useState(null);

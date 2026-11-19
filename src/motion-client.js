@@ -14,7 +14,7 @@
       .dkn-modal-overlay{animation:dkn-page-enter 160ms ease-out}
       .dkn-modal-overlay>[role=dialog],.dkn-hub-dialog[open]{animation:dkn-dialog-enter 180ms ease-out}
       .dkn-hub-dialog::backdrop{animation:dkn-page-enter 160ms ease-out}
-      .dkn-motion-page [role=status],.dkn-motion-page [role=alert],.dkn-modal-overlay [role=status],.dkn-motion-content,.dkn-motion-page [data-region]:not([hidden]){animation:dkn-surface-enter 180ms ease-out}
+      .dkn-motion-content,.dkn-motion-page [data-region]:not([hidden]){animation:dkn-surface-enter 180ms ease-out}
       :is(.dkn-motion-page,.dkn-hub-dialog,.dkn-modal-overlay) button[aria-busy=true]::before{content:'';display:inline-block;width:.8em;height:.8em;margin-right:7px;border:1.5px solid currentColor;border-right-color:transparent;border-radius:50%;vertical-align:-.08em;animation:dkn-spin 800ms linear infinite}
       @supports (interpolate-size:allow-keywords){
         .dkn-motion-page details{interpolate-size:allow-keywords}
