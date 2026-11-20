@@ -10,7 +10,7 @@ const listeners=new Set();let value={showTraeQuota:'true',showCodeBuddyQuota:'tr
 let snapshot={status:'ready',writable:true,value,revision:1};const form={getSnapshot:()=>snapshot,subscribe(fn){listeners.add(fn);return()=>listeners.delete(fn)},async set(key,v){value={...value,[key]:v};snapshot={...snapshot,value,revision:snapshot.revision+1};for(const fn of listeners)fn();return true}};
 const root=ReactDOM.createRoot(document.getElementById('app'));
 const pages={'dkn-agent-trae':api.TraeSettingsPage,'dkn-agent-settings':api.DknSettingsPage,'dkn-api-service':api.ApiServicePage,'dkn-agent-models':api.DknModelsPage,'dkn-agent-cli':api.CodexCliSettingsPage,'dkn-agent-zcode':api.ZcodeSettingsPage,'dkn-agent-antigravity':api.AntigravitySettingsPage,'dkn-agent-qoder':api.QoderSettingsPage,'dkn-agent-codex':api.CodexSettingsPage,'dkn-agent-quota':api.QuotaSettingsPage};
-const ctx={emit(){},configForms:{get:()=>form},layout:{selectPanel(id){window.openedPanel=id;render(id)}}};
+const ctx=Object.create({emit(){},configForms:{get(){if(window.failForm)throw Error('Fixture configuration unavailable');return form}},layout:{selectPanel(id){window.openedPanel=id;render(id)}}});
 const t=key=>({cn:'国内版',intl:'国际版',regionPicker:'配置区域',quickSetup:'CLI 安装与检测',navconnection:'连接',navmodels:'模型',navusage:'用量'}[key]||key);
 const regions=['cn','intl'].map(id=>({id,props:{t,region:id,legacyForm:form,statusUrl:'/plugins/dsh-codebuddy-cli-'+id+'/status'}}));
 function render(id){root.render(React.createElement(id==='codebuddy-cli'?api.UnifiedSettingsPage:pages[id],id==='codebuddy-cli'?{ctx,t,regions}:{ctx}));}
@@ -30,6 +30,7 @@ await new Promise(r=>server.listen(0,'127.0.0.1',r));
 const browser=await chromium.launch({headless:true,channel:'msedge'}),page=await browser.newPage({viewport:{width:1100,height:800}}),errors=[];
 page.on('pageerror',e=>{errors.push(e.message);console.error('Browser error:',e.message)});page.setDefaultTimeout(5000);
 try{
+ await page.addInitScript(()=>{if(!localStorage.getItem('fixture-initialized')){localStorage.setItem('dkn-workbench:visual-style','illustrated');localStorage.setItem('fixture-initialized','1')}});
  await page.goto(`http://127.0.0.1:${server.address().port}`);
  await page.getByRole('dialog',{name:'感谢使用 DKN Workbench'}).waitFor();
  const thanks=page.getByRole('dialog',{name:'感谢使用 DKN Workbench'});
@@ -59,7 +60,7 @@ try{
  assert.equal(probes.length,6);
  assert.equal(await page.getByRole('region',{name:'签到状态',exact:true}).getByLabel('自动签到',{exact:true}).count(),0);
  await page.evaluate(()=>window.render('dkn-agent-settings'));await page.getByRole('navigation',{name:'工作台导航'}).getByRole('button',{name:'后台与自动化',exact:true}).click();
- const summary=page.locator('.sw-background');
+ const summary=page.locator('.wb-background-page');
  assert.equal(await summary.getByLabel('退出 DSH 后继续运行',{exact:true}).evaluate(node=>getComputedStyle(node).appearance),'none');
  const keep=summary.getByLabel('退出 DSH 后继续运行',{exact:true});await keep.waitFor();await keep.click();await page.waitForFunction(()=>document.querySelector('input[aria-label=\"退出 DSH 后继续运行\"]').checked);assert.equal(backgroundPrefs.keepAlive,true);
  const auto=summary.getByLabel('自动签到',{exact:true});await auto.waitFor();await page.waitForFunction(()=>!document.querySelector('input[aria-label="自动签到"]').disabled);assert.equal(await auto.isChecked(),false);await auto.check();await summary.getByText(/下次计划：/).waitFor();assert.equal(autoEnabled,true);assert.equal(rewardClaims,0);await auto.uncheck();await page.waitForFunction(()=>!document.querySelector('input[aria-label="自动签到"]').disabled);assert.equal(autoEnabled,false);
@@ -119,42 +120,36 @@ try{
   }
   await page.screenshot({path:'research/ui/settings-project-'+mode+'-narrow.png',fullPage:true});
  }
- await page.route('**/plugins/dkn-agent/api-export/state',route=>route.fulfill({json:{running:true,active:0,queued:0,publicModel:'dkn',models:['qoder-acp/test-model'],catalog:[],records:[]}}));
- await page.setViewportSize({width:1500,height:1000});await page.evaluate(()=>{document.body.classList.remove('light');window.render('dkn-agent-settings')});
- await page.getByRole('navigation',{name:'工作台导航'}).waitFor();
-  assert.equal(await page.getByRole('combobox',{name:'界面风格',exact:true}).inputValue(),'simple');assert.equal(await page.locator('.sw-shell img').count(),0);
-  for(const mode of ['dark','light']){await page.evaluate(mode=>document.body.classList.toggle('light',mode==='light'),mode);await page.waitForTimeout(220);await page.screenshot({path:'research/ui/workbench-simple-'+mode+'.png',fullPage:true});}
-  await page.getByRole('button',{name:'Qoder',exact:true}).click();await page.locator('[data-provider-settings=qoder]').waitFor();
-  const nav=page.getByRole('navigation',{name:'配置内容'});
-  await nav.getByRole('button',{name:'模型',exact:true}).click();assert.equal(await page.getByText('CLI 完整路径',{exact:true}).count(),0);await page.getByRole('combobox',{name:'默认模型',exact:true}).waitFor();
-  await nav.getByRole('button',{name:'高级',exact:true}).click();await page.getByText('默认工作目录',{exact:true}).waitFor();
-  await nav.getByRole('button',{name:'连接',exact:true}).click();await page.getByText('CLI 完整路径',{exact:true}).waitFor();
-  await page.waitForTimeout(220);await page.screenshot({path:'research/ui/workbench-simple-qoder.png',fullPage:true});
-  await page.getByRole('button',{name:'返回模型与平台',exact:true}).click();
-  await page.setViewportSize({width:390,height:850});assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);await page.waitForTimeout(220);await page.screenshot({path:'research/ui/workbench-simple-narrow.png',fullPage:true});
-  await page.emulateMedia({reducedMotion:'reduce'});assert.equal(await page.locator('.sw-brand .sw-orb').evaluate(node=>getComputedStyle(node,'::before').animationName),'none');await page.emulateMedia({reducedMotion:'no-preference'});
-  await page.setViewportSize({width:1500,height:1000});await page.evaluate(()=>document.body.classList.remove('light'));await page.getByRole('combobox',{name:'界面风格',exact:true}).selectOption('illustrated');
-  await page.getByRole('region',{name:'模型调度场景'}).waitFor();await page.waitForFunction(()=>document.querySelector('.wb-desk img')?.naturalWidth>0);
- assert.equal(await page.getByRole('combobox',{name:'界面风格',exact:true}).inputValue(),'illustrated');
- await page.locator('.wb-courier .wp-idle').waitFor();
- assert.equal(await page.locator('.wb-courier .wp-idle').evaluate(async node=>{const image=new Image();image.src=getComputedStyle(node).backgroundImage.slice(5,-2);await image.decode();const canvas=document.createElement('canvas');canvas.width=image.naturalWidth;canvas.height=image.naturalHeight;const context=canvas.getContext('2d');context.drawImage(image,0,0);return context.getImageData(0,0,1,1).data[3]}),0,'painted courier must have true transparency');
- const idle=page.locator('.wb-courier .wp-idle');await idle.waitFor();const positions=await idle.evaluate(node=>{const animation=node.getAnimations()[0];animation.pause();animation.currentTime=0;const first=getComputedStyle(node).backgroundPosition;animation.currentTime=3200;const second=getComputedStyle(node).backgroundPosition;animation.play();return[first,second]});assert.notEqual(positions[0],positions[1],'idle atlas must actually blink/change frame');
- assert.equal(await page.getByRole('button',{name:'项目协作',exact:true}).count(),0);assert.equal(await page.getByRole('button',{name:'打开项目',exact:true}).count(),0);
- await page.getByRole('button',{name:'配置 Qoder',exact:true}).click();
- const drawer=page.getByRole('complementary',{name:'Qoder配置抽屉'});await drawer.waitFor();assert.equal(await drawer.locator('[data-provider-settings="qoder"]').count(),1);
- await drawer.getByRole('button',{name:'关闭配置抽屉'}).click();await drawer.waitFor({state:'hidden'});await page.waitForFunction(()=>document.activeElement?.getAttribute('aria-label')==='配置 Qoder');
- await page.screenshot({path:'research/ui/workbench-illustrated-dark.png',fullPage:true});
- await page.getByRole('button',{name:'配置 Codex',exact:true}).click();await page.getByRole('complementary',{name:'Codex配置抽屉'}).waitFor();await page.waitForTimeout(220);await page.screenshot({path:'research/ui/workbench-illustrated-drawer.png',fullPage:true});await page.getByRole('button',{name:'关闭配置抽屉'}).click();
- await page.getByRole('combobox',{name:'界面风格',exact:true}).selectOption('simple');await page.getByRole('heading',{name:'DKN Workbench',exact:true}).waitFor();assert.equal(await page.getByRole('region',{name:'模型调度场景'}).count(),0);
- await page.reload();await page.getByRole('combobox',{name:'界面风格',exact:true}).waitFor();assert.equal(await page.getByRole('combobox',{name:'界面风格',exact:true}).inputValue(),'simple');
- // Thanks is session-local in this fixture. Dismiss before changing the design.
- const resumedThanks=page.getByRole('dialog',{name:'感谢使用 DKN Workbench'});if(await resumedThanks.count())await resumedThanks.getByRole('button',{name:'继续使用',exact:true}).click();
- await page.getByRole('combobox',{name:'界面风格',exact:true}).selectOption('illustrated');await page.evaluate(()=>window.render('dkn-agent-settings'));
- await page.evaluate(()=>document.body.classList.add('light'));await page.screenshot({path:'research/ui/workbench-illustrated-light.png',fullPage:true});
- await page.setViewportSize({width:390,height:850});await page.getByRole('button',{name:'配置 Qoder',exact:true}).click();await page.getByRole('complementary',{name:'Qoder配置抽屉'}).waitFor();assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false,'illustrated drawer fits mobile');await page.getByRole('complementary',{name:'Qoder配置抽屉'}).scrollIntoViewIfNeeded();await page.waitForTimeout(220);await page.screenshot({path:'research/ui/workbench-illustrated-narrow.png',fullPage:true});
- await page.getByRole('button',{name:'关闭配置抽屉'}).click();
- await page.getByRole('button',{name:'外部 API',exact:false}).click();await page.getByRole('button',{name:'配置 API 服务',exact:true}).waitFor();await page.getByRole('button',{name:'关闭配置抽屉'}).click();
- await page.evaluate(()=>window.renderFooter());
+   await page.route('**/plugins/dkn-agent/api-export/state',route=>route.fulfill({json:{running:true,active:0,queued:0,publicModel:'dkn',models:['qoder-acp/test-model'],catalog:[],records:[]}}));
+  await page.setViewportSize({width:1500,height:1000});await page.evaluate(()=>{document.body.classList.remove('light');window.render('dkn-agent-settings')});
+  const scene=page.getByRole('region',{name:'模型调度场景'}),worknav=page.getByRole('navigation',{name:'工作台导航'});
+  await scene.waitFor();assert.equal(await page.getByRole('combobox',{name:'界面风格',exact:true}).inputValue(),'simple','old illustrated preference migrates once');assert.equal(await scene.locator('img').count(),0);assert.equal(await scene.locator('.wb-platform').count(),6);
+  assert.equal(await page.getByRole('button',{name:'项目协作',exact:true}).count(),0);
+  await page.getByRole('button',{name:'配置 Qoder',exact:true}).click();
+  const qoder=page.getByRole('complementary',{name:'Qoder配置抽屉'});await qoder.waitFor();await qoder.getByText('CLI 完整路径',{exact:true}).waitFor();
+  // Inherited configForms/layout model the host service context; spreading it loses services.
+  await qoder.getByLabel('CLI 完整路径',{exact:true}).fill('C:/fixture/qoder.exe');await qoder.getByLabel('CLI 完整路径',{exact:true}).press('Tab');await page.waitForFunction(()=>value.qoderPath==='C:/fixture/qoder.exe');
+  await qoder.getByRole('navigation',{name:'配置内容'}).getByRole('button',{name:'高级',exact:true}).click();await qoder.getByText('默认工作目录',{exact:true}).waitFor();
+  await page.getByRole('combobox',{name:'界面风格',exact:true}).selectOption('illustrated');assert.equal(await qoder.isVisible(),true,'style changes preserve open detail');await page.waitForFunction(()=>document.querySelector('.wb-desk img')?.naturalWidth>0);
+  await page.getByRole('combobox',{name:'界面风格',exact:true}).selectOption('simple');assert.equal(await scene.locator('img').count(),0);
+  await qoder.getByRole('button',{name:'关闭配置抽屉'}).click();await page.waitForFunction(()=>document.activeElement?.getAttribute('aria-label')==='配置 Qoder');
+  // Malformed or failed status responses must keep the page and controls visible.
+  await page.route('**/plugins/dkn-agent/qoder/status',route=>route.fulfill({json:{state:'found',models:{unexpected:true},path:'C:/fixture/qoder.exe'}}));
+  await page.getByRole('button',{name:'配置 Qoder',exact:true}).click();await qoder.getByText('已找到 CLI',{exact:true}).waitFor();await qoder.getByRole('navigation',{name:'配置内容'}).getByRole('button',{name:'模型',exact:true}).click();await qoder.getByRole('combobox',{name:'默认模型',exact:true}).waitFor();await page.keyboard.press('Escape');await page.unroute('**/plugins/dkn-agent/qoder/status');
+  await page.route('**/plugins/dkn-agent/qoder/status',route=>route.fulfill({status:500,json:{error:'Fixture Qoder status offline'}}));await page.getByRole('button',{name:'配置 Qoder',exact:true}).click();await qoder.getByRole('alert').filter({hasText:'Fixture Qoder status offline'}).waitFor();await page.keyboard.press('Escape');await page.unroute('**/plugins/dkn-agent/qoder/status');
+  await page.evaluate(()=>window.failForm=true);await page.getByRole('button',{name:'配置 Qoder',exact:true}).click();await qoder.getByText('配置页面加载失败',{exact:true}).waitFor();await page.evaluate(()=>window.failForm=false);await qoder.getByRole('button',{name:'重试加载',exact:true}).click();await qoder.getByText('CLI 完整路径',{exact:true}).waitFor();assert.ok(errors.length>0);assert.ok(errors.every(error=>error==='Fixture configuration unavailable'));errors.length=0;await page.keyboard.press('Escape');
+  for(const provider of ['Codex','Antigravity','ZCode','TRAE CN']){await page.getByRole('button',{name:'配置 '+provider,exact:true}).click();await page.getByRole('complementary',{name:provider+'配置抽屉'}).locator('[data-provider-settings]').waitFor();await page.keyboard.press('Escape');}
+  await worknav.getByRole('button',{name:'后台与自动化',exact:true}).click();await page.locator('.wb-background-page').getByLabel('自动签到',{exact:true}).waitFor();
+  await worknav.getByRole('button',{name:'API 服务',exact:true}).click();await page.getByRole('complementary',{name:'API 服务配置抽屉'}).locator('.dkn-api-page').waitFor();
+  await worknav.getByRole('button',{name:'工作台',exact:true}).click();assert.equal(await page.getByRole('complementary').count(),0);
+  for(const mode of ['dark','light']){await page.evaluate(mode=>document.body.classList.toggle('light',mode==='light'),mode);await page.waitForTimeout(220);await page.screenshot({path:'research/ui/workbench-scene-simple-'+mode+'.png',fullPage:true});}
+  await page.setViewportSize({width:390,height:850});assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);await page.screenshot({path:'research/ui/workbench-scene-simple-narrow.png',fullPage:true});await page.getByRole('button',{name:'配置 Qoder',exact:true}).click();await qoder.waitFor();assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);await page.waitForTimeout(220);await page.screenshot({path:'research/ui/workbench-scene-simple-qoder-narrow.png',fullPage:true});
+  await page.emulateMedia({reducedMotion:'reduce'});assert.equal(await scene.locator('.wb-router .sw-orb').evaluate(node=>getComputedStyle(node,'::before').animationName),'none');await page.emulateMedia({reducedMotion:'no-preference'});await page.keyboard.press('Escape');
+  await page.setViewportSize({width:1500,height:1000});await page.evaluate(()=>document.body.classList.remove('light'));await page.getByRole('combobox',{name:'界面风格',exact:true}).selectOption('illustrated');await page.waitForFunction(()=>document.querySelector('.wb-desk img')?.naturalWidth>0);
+  const idle=page.locator('.wb-courier .wp-idle');await idle.waitFor();const positions=await idle.evaluate(node=>{const animation=node.getAnimations()[0];animation.pause();animation.currentTime=0;const first=getComputedStyle(node).backgroundPosition;animation.currentTime=3200;const second=getComputedStyle(node).backgroundPosition;animation.play();return[first,second]});assert.notEqual(positions[0],positions[1]);await page.screenshot({path:'research/ui/workbench-scene-illustrated-dark.png',fullPage:true});
+  await page.reload();await page.getByRole('combobox',{name:'界面风格',exact:true}).waitFor();assert.equal(await page.getByRole('combobox',{name:'界面风格',exact:true}).inputValue(),'illustrated','new explicit choice persists');
+  const resumedThanks=page.getByRole('dialog',{name:'感谢使用 DKN Workbench'});if(await resumedThanks.count())await resumedThanks.getByRole('button',{name:'继续使用',exact:true}).click();await page.getByRole('combobox',{name:'界面风格',exact:true}).selectOption('simple');
+await page.evaluate(()=>window.renderFooter());
  await page.getByRole('dialog',{name:'发现插件新版本'}).waitFor();
  assert.equal(updateQueries,1);
  assert.equal(await page.getByRole('link',{name:'GitHub 下载更新'}).getAttribute('href'),'https://github.com/1924225725-collab/dsh-DKN-Workbench/releases/latest');

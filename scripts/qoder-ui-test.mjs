@@ -26,7 +26,9 @@ try{
   await page.getByText('已找到 CLI',{exact:true}).waitFor();
   await page.getByRole('button',{name:'检测 ACP 连接',exact:true}).click();
   await page.getByText('ACP 连接：已握手并创建会话，尚未测试回复',{exact:true}).waitFor();
+  await page.getByRole('navigation',{name:'配置内容'}).getByRole('button',{name:'模型',exact:true}).click();
   await page.getByLabel('默认模型',{exact:true}).selectOption('fixture');assert.equal(await page.evaluate(()=>window.saved.qoderModel),'fixture');
+  await page.getByRole('navigation',{name:'配置内容'}).getByRole('button',{name:'连接',exact:true}).click();
   await page.getByRole('button',{name:'发送测试',exact:true}).click();await page.getByText('Fixture OK',{exact:true}).waitFor();
   await page.getByText('ACP 连接：已收到真实回复',{exact:true}).waitFor();
   await mkdir('research/ui',{recursive:true});await page.screenshot({path:'research/ui/qoder-acp.png',fullPage:true});
