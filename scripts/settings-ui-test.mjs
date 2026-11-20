@@ -120,11 +120,24 @@ try{
   }
   await page.screenshot({path:'research/ui/settings-project-'+mode+'-narrow.png',fullPage:true});
  }
-   await page.route('**/plugins/dkn-agent/api-export/state',route=>route.fulfill({json:{running:true,active:0,queued:0,publicModel:'dkn',models:['qoder-acp/test-model'],catalog:[],records:[]}}));
+   const sceneState={running:true,active:0,queued:0,publicModel:'dkn',models:['qoder-acp/test-model'],catalog:[],records:[]};
+  await page.route('**/plugins/dkn-agent/api-export/state',route=>route.fulfill({json:sceneState}));
   await page.setViewportSize({width:1500,height:1000});await page.evaluate(()=>{document.body.classList.remove('light');window.render('dkn-agent-settings')});
   const scene=page.getByRole('region',{name:'模型调度场景'}),worknav=page.getByRole('navigation',{name:'工作台导航'});
   await scene.waitFor();assert.equal(await page.getByRole('combobox',{name:'界面风格',exact:true}).inputValue(),'simple','old illustrated preference migrates once');assert.equal(await scene.locator('img').count(),0);assert.equal(await scene.locator('.wb-platform').count(),6);
   assert.equal(await page.getByRole('button',{name:'项目协作',exact:true}).count(),0);
+  const qoderWire=scene.locator('[data-wire=qoder]'),codexWire=scene.locator('[data-wire=codex]');
+  await page.waitForFunction(()=>document.querySelector('[data-wire=qoder]')?.getAttribute('data-active')==='true');
+  assert.ok(Number(await codexWire.evaluate(node=>getComputedStyle(node).opacity))<.1,'inactive connections stay subdued');
+  await page.getByRole('button',{name:'配置 Codex',exact:true}).hover();await page.waitForFunction(()=>document.querySelector('[data-wire=codex]')?.getAttribute('data-emphasized')==='true');await page.waitForTimeout(700);assert.equal(await codexWire.locator('.wb-wire-light').evaluate(node=>getComputedStyle(node).strokeDashoffset),'0px');
+  const alignment=await page.evaluate(()=>{const scene=document.querySelector('.wb-scene').getBoundingClientRect(),node=document.querySelector('[data-platform=codex]').getBoundingClientRect(),port=document.querySelector('[data-wire=codex] circle:last-child');return Math.abs(Number(port.getAttribute('cx'))-(node.left-scene.left-7))+Math.abs(Number(port.getAttribute('cy'))-(node.top-scene.top+node.height/2));});assert.ok(alignment<1,'ports follow the raised card');await page.screenshot({path:'research/ui/workbench-refined-hover.png',fullPage:true});
+  await page.getByRole('button',{name:'配置 TRAE CN',exact:true}).focus();await page.waitForFunction(()=>document.querySelector('[data-wire=trae]')?.getAttribute('data-emphasized')==='true');
+  await page.locator('.wb-header h2').click();await page.locator('.wb-header h2').hover();await page.waitForTimeout(300);assert.equal(await codexWire.getAttribute('data-emphasized'),'false');
+  sceneState.active=1;await page.waitForFunction(()=>document.querySelector('.wb-courier')?.getAttribute('data-working')==='true',{},{timeout:8000});assert.equal(await scene.locator('.wb-courier').evaluate(node=>getComputedStyle(node).animationName),'sw-deliver');
+  sceneState.active=0;await page.waitForFunction(()=>document.querySelector('[data-wire=qoder]')?.getAttribute('data-settled')==='true',{},{timeout:8000});assert.equal(await scene.locator('.wb-courier').evaluate(node=>getComputedStyle(node).display),'none');
+  sceneState.models=['codex-cli/test-model'];await page.waitForFunction(()=>document.querySelector('[data-wire=codex]')?.getAttribute('data-active')==='true',{},{timeout:8000});await page.waitForTimeout(700);assert.equal(await qoderWire.locator('.wb-wire-light').evaluate(node=>getComputedStyle(node).strokeDashoffset),'1px');
+  sceneState.models=['qoder-acp/test-model'];await page.waitForFunction(()=>document.querySelector('[data-wire=qoder]')?.getAttribute('data-active')==='true',{},{timeout:8000});
+
   await page.getByRole('button',{name:'配置 Qoder',exact:true}).click();
   const qoder=page.getByRole('complementary',{name:'Qoder配置抽屉'});await qoder.waitFor();await qoder.getByText('CLI 完整路径',{exact:true}).waitFor();
   // Inherited configForms/layout model the host service context; spreading it loses services.
@@ -142,8 +155,8 @@ try{
   await worknav.getByRole('button',{name:'后台与自动化',exact:true}).click();await page.locator('.wb-background-page').getByLabel('自动签到',{exact:true}).waitFor();
   await worknav.getByRole('button',{name:'API 服务',exact:true}).click();await page.getByRole('complementary',{name:'API 服务配置抽屉'}).locator('.dkn-api-page').waitFor();
   await worknav.getByRole('button',{name:'工作台',exact:true}).click();assert.equal(await page.getByRole('complementary').count(),0);
-  for(const mode of ['dark','light']){await page.evaluate(mode=>document.body.classList.toggle('light',mode==='light'),mode);await page.waitForTimeout(220);await page.screenshot({path:'research/ui/workbench-scene-simple-'+mode+'.png',fullPage:true});}
-  await page.setViewportSize({width:390,height:850});assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);await page.screenshot({path:'research/ui/workbench-scene-simple-narrow.png',fullPage:true});await page.getByRole('button',{name:'配置 Qoder',exact:true}).click();await qoder.waitFor();assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);await page.waitForTimeout(220);await page.screenshot({path:'research/ui/workbench-scene-simple-qoder-narrow.png',fullPage:true});
+  for(const mode of ['dark','light']){await page.evaluate(mode=>document.body.classList.toggle('light',mode==='light'),mode);await page.waitForTimeout(220);await page.screenshot({path:'research/ui/workbench-refined-simple-'+mode+'.png',fullPage:true});}
+  await page.setViewportSize({width:390,height:850});assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);await page.screenshot({path:'research/ui/workbench-refined-simple-narrow.png',fullPage:true});await page.getByRole('button',{name:'配置 Qoder',exact:true}).click();await qoder.waitFor();assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);await page.waitForTimeout(220);await page.screenshot({path:'research/ui/workbench-refined-simple-qoder-narrow.png',fullPage:true});
   await page.emulateMedia({reducedMotion:'reduce'});assert.equal(await scene.locator('.wb-router .sw-orb').evaluate(node=>getComputedStyle(node,'::before').animationName),'none');await page.emulateMedia({reducedMotion:'no-preference'});await page.keyboard.press('Escape');
   await page.setViewportSize({width:1500,height:1000});await page.evaluate(()=>document.body.classList.remove('light'));await page.getByRole('combobox',{name:'界面风格',exact:true}).selectOption('illustrated');await page.waitForFunction(()=>document.querySelector('.wb-desk img')?.naturalWidth>0);
   const idle=page.locator('.wb-courier .wp-idle');await idle.waitFor();const positions=await idle.evaluate(node=>{const animation=node.getAnimations()[0];animation.pause();animation.currentTime=0;const first=getComputedStyle(node).backgroundPosition;animation.currentTime=3200;const second=getComputedStyle(node).backgroundPosition;animation.play();return[first,second]});assert.notEqual(positions[0],positions[1]);await page.screenshot({path:'research/ui/workbench-scene-illustrated-dark.png',fullPage:true});

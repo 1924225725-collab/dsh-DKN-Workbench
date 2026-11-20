@@ -1,6 +1,6 @@
 # dsh-DKN-Workbench
 
-DKN 集成工作台是面向 DeepSeek Harness 的 Windows 插件（原名 DKN Agent）。在 DSH 中浏览和继续本机 Codex 项目对话，使用 Codex、CodeBuddy 和 ZCode 的 CLI 模型，通过 Qoder ACP 使用本机账号模型，并按项目组织 Agent 协作。当前源码为 `2.3.6`，适配 DSH `0.2.2-rc.1` / `0.2.2-rc.3` / `0.2.2-rc.5`。
+DKN 集成工作台是面向 DeepSeek Harness 的 Windows 插件（原名 DKN Agent）。在 DSH 中浏览和继续本机 Codex 项目对话，使用 Codex、CodeBuddy 和 ZCode 的 CLI 模型，通过 Qoder ACP 使用本机账号模型，并按项目组织 Agent 协作。当前源码为 `2.3.7`，适配 DSH `0.2.2-rc.1` / `0.2.2-rc.3` / `0.2.2-rc.5`。
 
 界面默认使用简洁风格，与插画风格共用同一套调度布局和配置抽屉。简洁版以图标、连线和光点替换贴图，跟随 DSH 明暗主题；右上角可切换风格。升级后会一次性切到简洁版，之后保留你的选择。
 

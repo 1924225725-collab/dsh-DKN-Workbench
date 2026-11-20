@@ -1,7 +1,7 @@
 {
   "name": "dsh-dkn-agent",
   "displayName": "DKN Agent",
-  "version": "2.3.6",
+  "version": "2.3.7",
   "bundledCodeBuddyVersion": "1.0.4",
   "description": "在 DSH 接入 TRAE CN 国内个人版、CodeBuddy、Codex CLI、Qoder ACP、Antigravity ACP 和 ZCode 模型，提供可选 Antigravity ACP 通道，提供原生 Codex 项目、账号额度、每日奖励与可选自动签到及项目协作。",
   "type": "module",
