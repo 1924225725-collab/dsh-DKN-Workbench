@@ -1,6 +1,8 @@
 # dsh-DKN-Workbench
 
-DKN Workbench for DSH (formerly DKN Agent) is an integrated workbench plugin for DeepSeek Harness on Windows. Current: `2.3.8`, targeting DSH `0.2.2-rc.1` / `0.2.2-rc.3` / `0.2.2-rc.5`. Includes native Codex projects/conversations, domestic and international CodeBuddy CLI model providers, a ZCode CLI app-server model provider, and an embedded collaboration core extracted from Agent Hub. No gateway, remote cluster or DSH desktop distribution is included.
+DKN Workbench for DSH (formerly DKN Agent) is an integrated workbench plugin for DeepSeek Harness on Windows. Current: `2.3.9`, targeting DSH `0.2.2-rc.1` / `0.2.2-rc.3` / `0.2.2-rc.5`. Includes native Codex projects/conversations, domestic and international CodeBuddy CLI model providers, a ZCode CLI app-server model provider, and an embedded collaboration core extracted from Agent Hub. No gateway, remote cluster or DSH desktop distribution is included.
+
+OrcaTerm supports WeChat OAuth, model selection, text conversations, real-reply verification, AI question quota queries and unified API export. Credentials are protected with Windows CurrentUser DPAPI and shared with the independent background. This channel currently supports text. Images, tool calls and daily check-in are not enabled.
 
 The default minimal appearance shares the same routing scene and configuration drawers as the illustrated appearance. Icons, connection lines and a small light replace bitmap artwork, with DSH light/dark themes and reduced-motion support. The upgrade selects the minimal appearance once; subsequent choices are remembered.
 

@@ -44,11 +44,11 @@
       const visible=rows.filter(child=>category(child)===tab);
       return h(WorkbenchPage,{ctx,title:title||providerNames[provider],provider,active:project?'project':'models',subtitle:project?'原生项目与本机运行时':'连接、配置与验证，在同一个工作区完成',activity:pending,activityLabel:pending?'正在处理，稍等一下':'准备好帮你连接'},
         h('div',{className:'wp-toolbar'},h(ProviderStatus,{provider,project}),!project?h(ProviderVerify,{provider}):null,settingsControl('button',{type:'button',onClick:()=>provider==='antigravity'?window.open('https://antigravity.google/','_blank','noopener'):openProviderQuota(ctx,provider)},provider==='antigravity'?'官方账号与额度':'额度与用量')),
-        h('p',{style:{fontSize:12,opacity:.72}},provider==='trae'?'输入：文字 · 图片暂未适配':provider==='codebuddy'?'输入：文字 · 图片（取决于模型目录声明）':provider==='qoder'||provider==='antigravity'?'输入：文字 · 图片（按当前 ACP 能力启用）':'输入：文字 · 图片', '；原始文件附件暂未适配。连接验证仅测试文字。'),
+        h('p',{style:{fontSize:12,opacity:.72}},provider==='orcaterm'?'输入：文字；图片与工具调用尚未适配':provider==='trae'?'输入：文字 · 图片暂未适配':provider==='codebuddy'?'输入：文字 · 图片（取决于模型目录声明）':provider==='qoder'||provider==='antigravity'?'输入：文字 · 图片（按当前 ACP 能力启用）':'输入：文字 · 图片', '；原始文件附件暂未适配。连接验证仅测试文字。'),
         provider==='codebuddy'?null:h('nav',{className:'wp-tabs','aria-label':'配置内容',style:{marginTop:20}},...['连接','模型','用量','高级'].map(name=>settingsControl('button',{key:name,type:'button','aria-pressed':tab===name,onClick:()=>setTab(name)},name))),h('div',{className:'wp-provider-body wp-tabs-content',key:tab},provider==='codebuddy'?children:visible.length?visible:tab==='用量'?h('section',{className:'sw-empty'},h('p',null,'查看当前账号的余额、套餐和限额。'),settingsControl('button',{type:'button',onClick:()=>provider==='antigravity'?window.open('https://antigravity.google/','_blank','noopener'):openProviderQuota(ctx,provider)},'查看账号用量')):h('p',{className:'sw-empty'},tab==='模型'?'模型由当前 CLI 账号提供，此平台没有额外的模型配置。':'此平台没有单独的'+tab+'设置。')));
     }
     function QuotaWorkbench({ctx,quota,quotaBusy,quotaError,selected,setSelected,refreshQuota,detail,flag,snapshot}){
-      const rows=[['codebuddy','CodeBuddy'],['deepseek','DeepSeek'],['codex','Codex'],['qoder','Qoder'],['zcode','ZCode'],['trae','TRAE CN']];
+      const rows=[['orcaterm','OrcaTerm'],['codebuddy','CodeBuddy'],['deepseek','DeepSeek'],['codex','Codex'],['qoder','Qoder'],['zcode','ZCode'],['trae','TRAE CN']];
       return h(WorkbenchPage,{ctx,title:'额度与用量',subtitle:'当前账号的余额、套餐与限额窗口',active:'quota',activity:quotaBusy||!quota&&!quotaError,activityLabel:quotaError?'暂未读到额度':quotaBusy||!quota?'正在整理额度':'额度已整理，随时查看'},
         h('div',{className:'wp-toolbar'},settingsControl('button',{type:'button',disabled:quotaBusy,onClick:refreshQuota},quotaBusy?'正在查询…':'刷新额度'),quota?.updatedAt?h('small',null,'更新于 '+new Date(quota.updatedAt).toLocaleTimeString()):null),quotaError?h('p',{role:'alert'},quotaError):null,
         h('nav',{className:'wp-nav','aria-label':'额度平台'},...['',...rows.map(([id])=>id)].map(id=>settingsControl('button',{key:id,type:'button','aria-pressed':selected===id,onClick:()=>setSelected(id)},id?providerNames[id]:'全部'))),
@@ -56,6 +56,6 @@
         null);
     }
     function ModelWorkbench({ctx,quota}){
-      const providers=[['codebuddy','codebuddy-cli'],['codex',CLI_PANEL],['qoder',QODER_PANEL],['antigravity',ANTIGRAVITY_PANEL],['zcode',ZCODE_PANEL],['trae',TRAE_PANEL]];
+      const providers=[['orcaterm',ORCATERM_PANEL],['codebuddy','codebuddy-cli'],['codex',CLI_PANEL],['qoder',QODER_PANEL],['antigravity',ANTIGRAVITY_PANEL],['zcode',ZCODE_PANEL],['trae',TRAE_PANEL]];
       return h(WorkbenchPage,{ctx,title:'模型与平台',subtitle:'选择平台管理连接与配置；每日奖励集中在这里',activity:!quota,activityLabel:quota?'先选一个平台吧':'正在查看账号'},h(CheckinOverview),h('div',{className:'wp-model-grid'},...providers.map(([provider,panel])=>h('article',{className:'wp-model-card',key:provider},h('header',null,settingsControl('button',{type:'button','aria-label':providerNames[provider],onClick:()=>ctx.layout.selectPanel(panel)},h(ProviderIcon,{provider,size:24}),h('strong',null,providerNames[provider]))),h('div',{className:'wp-quota-value','aria-label':providerNames[provider]+' 剩余额度'},compactQuota(quota?.[provider])),h('small',null,'当前账号额度'),h('footer',null,h(ProviderStatus,{provider}),h(ProviderVerify,{provider}))))));
     }

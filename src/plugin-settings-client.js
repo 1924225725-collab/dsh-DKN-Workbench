@@ -17,7 +17,7 @@
       React.useEffect(()=>{if(!form)return;const sync=()=>setSnapshot(form.getSnapshot());sync();return form.subscribe(sync)},[form]);
       const save=async(key,value)=>{setBusy(key);setError('');try{if(!form?.set||!snapshot.writable)throw Error('当前配置不可写');await form.set(key,value?'true':'false')}catch(e){setError(e.message||'保存失败，请重试')}finally{setBusy('')}};
       return h('div',{className:'wb-general-settings'},h(SettingsControlsStyles),h('p',null,'余额与用量入口'),...[
-        ['CodeBuddy 用量','showCodeBuddyQuota'],['DeepSeek 余额','showDeepSeekQuota'],['Codex 用量','showCodexQuota'],['Qoder 额度','showQoderQuota'],['ZCode 套餐','showZcodeQuota'],['TRAE CN 额度','showTraeQuota']
+        ['OrcaTerm 额度','showOrcatermQuota'],['CodeBuddy 用量','showCodeBuddyQuota'],['DeepSeek 余额','showDeepSeekQuota'],['Codex 用量','showCodexQuota'],['Qoder 额度','showQoderQuota'],['ZCode 套餐','showZcodeQuota'],['TRAE CN 额度','showTraeQuota']
       ].map(([label,key])=>h(SettingsToggle,{key,label,description:'在侧栏额度摘要中显示',checked:String(snapshot.value?.[key]??'true')==='true',disabled:!snapshot.writable||!!busy,onChange:event=>save(key,event.target.checked)})),h('small',{role:error?'alert':'status'},error||(busy?'正在保存…':snapshot.writable?'修改后自动保存':'当前配置只读')));
     }
     function PluginSettingsButton({ctx}){

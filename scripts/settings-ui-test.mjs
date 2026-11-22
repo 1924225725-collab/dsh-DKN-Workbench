@@ -6,10 +6,10 @@ const require=createRequire('C:/Users/admin/.cache/codex-runtimes/codex-primary-
 const {chromium}=require('playwright');
 const [react,dom,client]=await Promise.all(['node_modules/react/umd/react.development.js','node_modules/react-dom/umd/react-dom.development.js','lib/client.js'].map(p=>readFile(p,'utf8')));
 const html=`<!doctype html><meta charset="utf-8"><style>*{box-sizing:border-box}html,body,#app{height:100%;margin:0}body{font:14px Segoe UI,sans-serif;background:var(--dsw-alias-bg-layer-1);color:var(--dsw-alias-label-primary);--dsw-alias-bg-layer-1:#17191e;--dsw-alias-bg-layer-2:#202228;--dsw-alias-bg-layer-3:#292b31;--dsw-alias-label-primary:#e7e9ee;--dsw-alias-label-secondary:#a0a6b2;--dsw-alias-border-l4:#454850}body.light{--dsw-alias-bg-layer-1:#fff;--dsw-alias-bg-layer-2:#f5f6f8;--dsw-alias-bg-layer-3:#e9edf3;--dsw-alias-label-primary:#202329;--dsw-alias-label-secondary:#595f6a;--dsw-alias-border-l4:#d4d8df}button,input,select,textarea{font:inherit}button{width:fit-content}</style><div id="app"></div><script>${react}</script><script>${dom}</script><script>let api;window.__ModuleLoader__={load(m){api=m.factory(()=>React)}};</script><script>${client.replaceAll('</script','<\\/script')}</script><script>
-const listeners=new Set();let value={showTraeQuota:'true',showCodeBuddyQuota:'true',showCodexQuota:'true',showDeepSeekQuota:'true',showQoderQuota:'true',showZcodeQuota:'true'};
+const listeners=new Set();let value={showOrcatermQuota:'true',showTraeQuota:'true',showCodeBuddyQuota:'true',showCodexQuota:'true',showDeepSeekQuota:'true',showQoderQuota:'true',showZcodeQuota:'true'};
 let snapshot={status:'ready',writable:true,value,revision:1};const form={getSnapshot:()=>snapshot,subscribe(fn){listeners.add(fn);return()=>listeners.delete(fn)},async set(key,v){value={...value,[key]:v};snapshot={...snapshot,value,revision:snapshot.revision+1};for(const fn of listeners)fn();return true}};
 const root=ReactDOM.createRoot(document.getElementById('app'));
-const pages={'dkn-agent-trae':api.TraeSettingsPage,'dkn-agent-settings':api.DknSettingsPage,'dkn-api-service':api.ApiServicePage,'dkn-agent-models':api.DknModelsPage,'dkn-agent-cli':api.CodexCliSettingsPage,'dkn-agent-zcode':api.ZcodeSettingsPage,'dkn-agent-antigravity':api.AntigravitySettingsPage,'dkn-agent-qoder':api.QoderSettingsPage,'dkn-agent-codex':api.CodexSettingsPage,'dkn-agent-quota':api.QuotaSettingsPage};
+const pages={'dkn-agent-orcaterm':api.OrcaTermSettingsPage,'dkn-agent-trae':api.TraeSettingsPage,'dkn-agent-settings':api.DknSettingsPage,'dkn-api-service':api.ApiServicePage,'dkn-agent-models':api.DknModelsPage,'dkn-agent-cli':api.CodexCliSettingsPage,'dkn-agent-zcode':api.ZcodeSettingsPage,'dkn-agent-antigravity':api.AntigravitySettingsPage,'dkn-agent-qoder':api.QoderSettingsPage,'dkn-agent-codex':api.CodexSettingsPage,'dkn-agent-quota':api.QuotaSettingsPage};
 const ctx=Object.create({emit(){},configForms:{get(){if(window.failForm)throw Error('Fixture configuration unavailable');return form}},layout:{selectPanel(id){window.openedPanel=id;render(id)}}});
 const t=key=>({cn:'国内版',intl:'国际版',regionPicker:'配置区域',quickSetup:'CLI 安装与检测',navconnection:'连接',navmodels:'模型',navusage:'用量'}[key]||key);
 const regions=['cn','intl'].map(id=>({id,props:{t,region:id,legacyForm:form,statusUrl:'/plugins/dsh-codebuddy-cli-'+id+'/status'}}));
@@ -23,7 +23,7 @@ const server=createServer((req,res)=>{
  if(req.url.includes('/checkin')){if(req.url.includes('provider=trae')){res.writeHead(200,{'Content-Type':'application/json'});return res.end(JSON.stringify({state:'no-activity'}));}const key=req.url.includes('codebuddy')?'codebuddy':'qoder';if(req.method==='POST'){rewardClaims++;claimedRewards.add(key)}res.writeHead(200,{'Content-Type':'application/json'});return res.end(JSON.stringify({state:req.method==='GET'&&failedRewardQuery===key?'error':claimedRewards.has(key)?'claimed':'claimable',amount:100,resetAt:Date.now()+3600000,mutationAccepted:req.method==='POST'}));}
  if(req.url.endsWith('/update')){updateQueries++;res.writeHead(200,{'Content-Type':'application/json'});return res.end(JSON.stringify({currentVersion:'2.1.2',latestVersion:'2.2.0',updateAvailable:true}));}
  if(req.method==='POST'&&(req.url.endsWith('/test')||req.url.endsWith('/actions'))){probes.push(req.url);res.writeHead(200,{'Content-Type':'application/json'});return res.end(JSON.stringify({state:'ready',text:'OK'}));}
- if(req.url.startsWith('/plugins/')){res.writeHead(200,{'Content-Type':'application/json'});return res.end(JSON.stringify(req.url.split('?')[0].endsWith('/quota')?{trae:{state:'available',buckets:[{label:'可用积分',unit:'积分',remaining:2900,total:2900}]},codex:{state:'available',rateLimits:{rateLimits:{primary:{usedPercent:81,windowDurationMins:300,resetsAt:Date.now()/1000+1800}}}},deepseek:{state:'available',source:'dsh-account',wallets:[{currency:'CNY',kind:'充值',balance:'12.345'},{currency:'CNY',kind:'赠金',balance:'0'}]},qoder:{state:'available',buckets:[{label:'套餐',unit:'Credits',remaining:300,total:300}]},zcode:{state:'available',source:'zcode-start-plan',activePlans:0},updatedAt:Date.now()}:req.url.endsWith('/state')?{connected:false}:{loginFound:req.url.includes('/trae/'),installPath:'C:/synthetic/Trae CN',state:req.url.includes('/cli/')?'ready':'found',path:'C:/synthetic/provider.exe',enabled:true,registered:true,models:[],usage:{calls:0,credits:0},quota:{state:'available',region:req.url.includes('-cn/')?'cn':'intl',remaining:88.5}}));}
+ if(req.url.startsWith('/plugins/')){res.writeHead(200,{'Content-Type':'application/json'});return res.end(JSON.stringify(req.url.split('?')[0].endsWith('/quota')?{orcaterm:{state:'available',buckets:[{label:'AI 问答',unit:'次',remaining:97,total:100}]},trae:{state:'available',buckets:[{label:'可用积分',unit:'积分',remaining:2900,total:2900}]},codex:{state:'available',rateLimits:{rateLimits:{primary:{usedPercent:81,windowDurationMins:300,resetsAt:Date.now()/1000+1800}}}},deepseek:{state:'available',source:'dsh-account',wallets:[{currency:'CNY',kind:'充值',balance:'12.345'},{currency:'CNY',kind:'赠金',balance:'0'}]},qoder:{state:'available',buckets:[{label:'套餐',unit:'Credits',remaining:300,total:300}]},zcode:{state:'available',source:'zcode-start-plan',activePlans:0},updatedAt:Date.now()}:req.url.endsWith('/state')?{connected:false}:{loginFound:req.url.includes('/trae/'),installPath:'C:/synthetic/Trae CN',state:req.url.includes('/cli/')?'ready':'found',path:'C:/synthetic/provider.exe',enabled:true,registered:true,models:[],usage:{calls:0,credits:0},quota:{state:'available',region:req.url.includes('-cn/')?'cn':'intl',remaining:88.5}}));}
  res.writeHead(200,{'Content-Type':'text/html;charset=utf-8'});res.end(html);
 });
 await new Promise(r=>server.listen(0,'127.0.0.1',r));
@@ -43,13 +43,13 @@ try{
  assert.equal(await page.getByRole('link',{name:'☆ 前往 GitHub',exact:true}).getAttribute('href'),'https://github.com/1924225725-collab/dsh-DKN-Workbench');
  await page.getByRole('button',{name:'继续使用',exact:true}).click();
  await page.getByRole('button',{name:'插件总设置',exact:true}).click();
- const general=page.getByRole('dialog',{name:'插件总设置',exact:true});await general.waitFor();assert.equal(await general.getByRole('checkbox').count(),6);
+ const general=page.getByRole('dialog',{name:'插件总设置',exact:true});await general.waitFor();assert.equal(await general.getByRole('checkbox').count(),7);
  await general.getByLabel('CodeBuddy 用量',{exact:true}).uncheck();await page.waitForFunction(()=>value.showCodeBuddyQuota==='false');assert.equal(await general.getByLabel('CodeBuddy 用量',{exact:true}).isChecked(),false);
  await general.getByLabel('CodeBuddy 用量',{exact:true}).check();await page.waitForFunction(()=>value.showCodeBuddyQuota==='true');
  await page.setViewportSize({width:390,height:800});assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);await page.screenshot({path:'research/ui/plugin-general-settings-narrow.png'});await page.getByRole('button',{name:'关闭插件总设置',exact:true}).click();await page.setViewportSize({width:1100,height:800});
  assert.equal(probes.length,0);
  assert.equal(await page.getByLabel('DeepSeek 剩余额度',{exact:true}).count(),0);
- for(const provider of ['CodeBuddy','Codex','Qoder','ZCode','Antigravity','TRAE CN']){
+ for(const provider of ['CodeBuddy','Codex','Qoder','ZCode','Antigravity','TRAE CN','OrcaTerm']){
   await page.getByRole('button',{name:'验证 '+provider,exact:true}).click();
   const dialog=page.getByRole('dialog',{name:'验证 '+provider,exact:true});
   await dialog.getByRole('button',{name:'开始验证',exact:true}).click();
@@ -57,7 +57,7 @@ try{
   assert.equal(await dialog.locator('pre').textContent(),'OK');
   await dialog.getByRole('button',{name:'关闭验证 '+provider,exact:true}).click();
  }
- assert.equal(probes.length,6);
+ assert.equal(probes.length,7);
  assert.equal(await page.getByRole('region',{name:'签到状态',exact:true}).getByLabel('自动签到',{exact:true}).count(),0);
  await page.evaluate(()=>window.render('dkn-agent-settings'));await page.getByRole('navigation',{name:'工作台导航'}).getByRole('button',{name:'后台与自动化',exact:true}).click();
  const summary=page.locator('.wb-background-page');
@@ -79,7 +79,7 @@ try{
  assert.equal(await page.getByRole('button',{name:'Codex',exact:true}).count(),1);
  assert.equal(await page.getByText('Codex Agent',{exact:false}).count(),0);
  await mkdir('research/ui',{recursive:true});await page.waitForTimeout(220);await page.screenshot({path:'research/ui/settings-models-dark.png'});
- for(const [label,id,provider] of [['CodeBuddy','codebuddy-cli','codebuddy'],['Codex','dkn-agent-cli','codex'],['Qoder','dkn-agent-qoder','qoder'],['Antigravity','dkn-agent-antigravity','antigravity'],['ZCode','dkn-agent-zcode','zcode'],['TRAE CN','dkn-agent-trae','trae']]){
+ for(const [label,id,provider] of [['OrcaTerm','dkn-agent-orcaterm','orcaterm'],['CodeBuddy','codebuddy-cli','codebuddy'],['Codex','dkn-agent-cli','codex'],['Qoder','dkn-agent-qoder','qoder'],['Antigravity','dkn-agent-antigravity','antigravity'],['ZCode','dkn-agent-zcode','zcode'],['TRAE CN','dkn-agent-trae','trae']]){
   await page.evaluate(()=>window.render('dkn-agent-models'));
   await page.getByRole('button',{name:label,exact:true}).click();
   await page.locator('[data-provider-settings="'+provider+'"]').waitFor();
@@ -106,7 +106,7 @@ try{
   if(label==='Qoder')await page.getByText('套餐 剩余 300 Credits / 300',{exact:true}).waitFor();
   if(label==='ZCode')await page.getByText('Start Plan：无有效套餐',{exact:true}).waitFor();
   await page.getByRole('button',{name:'刷新额度',exact:true}).click();await page.getByRole('button',{name:'刷新额度',exact:true}).waitFor();
-  await page.getByRole('button',{name:'全部',exact:true}).click();assert.equal(await page.locator('article').count(),6);await page.locator('.wp-quota-card').filter({has:page.getByText('DeepSeek',{exact:true})}).getByText('明细与来源',{exact:true}).click();await page.getByText('充值 CNY 12.35 · 赠金 CNY 0.00',{exact:true}).waitFor();
+  await page.getByRole('button',{name:'全部',exact:true}).click();assert.equal(await page.locator('article').count(),7);await page.locator('.wp-quota-card').filter({has:page.getByText('DeepSeek',{exact:true})}).getByText('明细与来源',{exact:true}).click();await page.getByText('充值 CNY 12.35 · 赠金 CNY 0.00',{exact:true}).waitFor();
   if(label==='ZCode')await page.screenshot({path:'research/ui/quota-2.1.0-dark.png',fullPage:true});
   await page.evaluate(id=>window.render(id),id);
   await page.waitForTimeout(220);await page.screenshot({path:'research/ui/settings-'+provider+'-dark.png',fullPage:true});
@@ -124,7 +124,7 @@ try{
   await page.route('**/plugins/dkn-agent/api-export/state',route=>route.fulfill({json:sceneState}));
   await page.setViewportSize({width:1500,height:1000});await page.evaluate(()=>{document.body.classList.remove('light');window.render('dkn-agent-settings')});
   const scene=page.getByRole('region',{name:'模型调度场景'}),worknav=page.getByRole('navigation',{name:'工作台导航'});
-  await scene.waitFor();assert.equal(await page.getByRole('combobox',{name:'界面风格',exact:true}).inputValue(),'simple','old illustrated preference migrates once');assert.equal(await scene.locator('img').count(),0);assert.equal(await scene.locator('.wb-platform').count(),6);
+  await scene.waitFor();assert.equal(await page.getByRole('combobox',{name:'界面风格',exact:true}).inputValue(),'simple','old illustrated preference migrates once');assert.equal(await scene.locator('img').count(),0);assert.equal(await scene.locator('.wb-platform').count(),7);
   assert.equal(await page.getByRole('button',{name:'项目协作',exact:true}).count(),0);
   const qoderWire=scene.locator('[data-wire=qoder]'),codexWire=scene.locator('[data-wire=codex]');
   await page.waitForFunction(()=>document.querySelector('[data-wire=qoder]')?.getAttribute('data-active')==='true');
@@ -151,7 +151,7 @@ try{
   await page.getByRole('button',{name:'配置 Qoder',exact:true}).click();await qoder.getByText('已找到 CLI',{exact:true}).waitFor();await qoder.getByRole('navigation',{name:'配置内容'}).getByRole('button',{name:'模型',exact:true}).click();await qoder.getByRole('combobox',{name:'默认模型',exact:true}).waitFor();await page.keyboard.press('Escape');await page.unroute('**/plugins/dkn-agent/qoder/status');
   await page.route('**/plugins/dkn-agent/qoder/status',route=>route.fulfill({status:500,json:{error:'Fixture Qoder status offline'}}));await page.getByRole('button',{name:'配置 Qoder',exact:true}).click();await qoder.getByRole('alert').filter({hasText:'Fixture Qoder status offline'}).waitFor();await page.keyboard.press('Escape');await page.unroute('**/plugins/dkn-agent/qoder/status');
   await page.evaluate(()=>window.failForm=true);await page.getByRole('button',{name:'配置 Qoder',exact:true}).click();await qoder.getByText('配置页面加载失败',{exact:true}).waitFor();await page.evaluate(()=>window.failForm=false);await qoder.getByRole('button',{name:'重试加载',exact:true}).click();await qoder.getByText('CLI 完整路径',{exact:true}).waitFor();assert.ok(errors.length>0);assert.ok(errors.every(error=>error==='Fixture configuration unavailable'));errors.length=0;await page.keyboard.press('Escape');
-  for(const provider of ['Codex','Antigravity','ZCode','TRAE CN']){await page.getByRole('button',{name:'配置 '+provider,exact:true}).click();await page.getByRole('complementary',{name:provider+'配置抽屉'}).locator('[data-provider-settings]').waitFor();await page.keyboard.press('Escape');}
+  for(const provider of ['OrcaTerm','Codex','Antigravity','ZCode','TRAE CN']){await page.getByRole('button',{name:'配置 '+provider,exact:true}).click();await page.getByRole('complementary',{name:provider+'配置抽屉'}).locator('[data-provider-settings]').waitFor();await page.keyboard.press('Escape');}
   await worknav.getByRole('button',{name:'后台与自动化',exact:true}).click();await page.locator('.wb-background-page').getByLabel('自动签到',{exact:true}).waitFor();
   await worknav.getByRole('button',{name:'API 服务',exact:true}).click();await page.getByRole('complementary',{name:'API 服务配置抽屉'}).locator('.dkn-api-page').waitFor();
   await worknav.getByRole('button',{name:'工作台',exact:true}).click();assert.equal(await page.getByRole('complementary').count(),0);
