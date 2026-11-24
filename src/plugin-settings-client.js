@@ -21,6 +21,10 @@
       ].map(([label,key])=>h(SettingsToggle,{key,label,description:'在侧栏额度摘要中显示',checked:String(snapshot.value?.[key]??'true')==='true',disabled:!snapshot.writable||!!busy,onChange:event=>save(key,event.target.checked)})),h('small',{role:error?'alert':'status'},error||(busy?'正在保存…':snapshot.writable?'修改后自动保存':'当前配置只读')));
     }
     function PluginSettingsButton({ctx}){
-      const [open,setOpen]=React.useState(false);
-      return h(React.Fragment,null,h(SettingsControlsStyles),settingsControl('button',{className:'wb-settings-gear',type:'button','aria-label':'插件总设置',title:'插件总设置',onClick:()=>setOpen(true)},h('svg',{viewBox:'0 0 24 24',width:18,height:18,fill:'none',stroke:'currentColor',strokeWidth:1.6,'aria-hidden':true},h('path',{d:'m10 3-1 3-3 1-3 3v4l3 3 3 1 1 3h4l1-3 3-1 3-3v-4l-3-3-3-1-1-3Z'}),h('circle',{cx:12,cy:12,r:3}))),open?h(WorkbenchModal,{title:'插件总设置',onClose:()=>setOpen(false)},h(GeneralSettings,{ctx})):null);
+      const [dialog,setDialog]=React.useState('');
+      return h(React.Fragment,null,h(SettingsControlsStyles),settingsControl('button',{className:'wb-settings-gear',type:'button','aria-label':'插件总设置',title:'插件总设置',onClick:()=>setDialog('settings')},h('svg',{viewBox:'0 0 24 24',width:18,height:18,fill:'none',stroke:'currentColor',strokeWidth:1.6,'aria-hidden':true},h('path',{d:'m10 3-1 3-3 1-3 3v4l3 3 3 1 1 3h4l1-3 3-1 3-3v-4l-3-3-3-1-1-3Z'}),h('circle',{cx:12,cy:12,r:3}))),
+        dialog==='settings'?h(WorkbenchModal,{title:'插件总设置',onClose:()=>setDialog('')},
+          settingsControl('button',{type:'button',onClick:()=>setDialog('guide')},'使用攻略'),
+          h(GeneralSettings,{ctx})):null,
+        dialog==='guide'?h(WorkbenchGuide,{onClose:()=>setDialog('settings')}):null);
     }

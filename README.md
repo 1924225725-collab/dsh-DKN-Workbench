@@ -1,6 +1,6 @@
 # dsh-DKN-Workbench
 
-DKN 集成工作台是面向 DeepSeek Harness 的 Windows 插件（原名 DKN Agent）。在 DSH 中浏览和继续本机 Codex 项目对话，使用 Codex、CodeBuddy 和 ZCode 的 CLI 模型，通过 Qoder ACP 使用本机账号模型，并按项目组织 Agent 协作。当前源码为 `2.3.9`，适配 DSH `0.2.2-rc.1` / `0.2.2-rc.3` / `0.2.2-rc.5`。
+DKN 集成工作台是面向 DeepSeek Harness 的 Windows 插件（原名 DKN Agent）。在 DSH 中浏览和继续本机 Codex 项目对话，使用 Codex、CodeBuddy 和 ZCode 的 CLI 模型，通过 Qoder ACP 使用本机账号模型，并按项目组织 Agent 协作。当前源码为 `2.4.2`，适配 DSH `0.2.2-rc.1` / `0.2.2-rc.3` / `0.2.2-rc.5`。
 
 OrcaTerm 支持微信扫码登录、模型选择、文字对话、真实回复验证、AI 问答额度查询及统一 API 导出。登录凭据通过 Windows 当前用户加密保存，API 后台可在 DSH 退出后继续读取。当前通道只开放文字，图片、工具调用和每日签到尚未适配。
 
@@ -28,6 +28,10 @@ API 与自动签到共用独立后台，插件作为统一配置入口。可选�
 2.2.6 增加 Antigravity 配置页和后台/API 路由。通道已接入，但本机真实请求仍被官方验证/地区资格限制拦截，不标为已验证可用。支持手动代理与 Windows 系统代理，不会自动切换 VPN 节点。见[接入说明](docs/antigravity-acp.md)。
 
 ## 安装与入口
+
+[DKN Workbench 使用攻略](docs/workbench-guide.md)
+
+打开「模型与平台 → 平台 → 连接」。缺少 CLI 时，Windows x64 可一键部署 Codex、Qoder、Antigravity，Windows ARM64 可部署 Codex。ZCode 在 Windows x64 / ARM64 上下载并打开官方桌面安装向导。各平台均提供官方安装指南。部署完成后请按页面指引登录并发送连接测试。
 
 ### 接入的平台
 

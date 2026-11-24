@@ -62,8 +62,8 @@ try{
  const firstInstall=page.getByRole('dialog',{name:'首次安装：Codex 侧栏适配',exact:true});
  await firstInstall.waitFor();await firstInstall.getByRole('button',{name:'知道了',exact:true}).click();
  assert.equal(await page.evaluate(()=>localStorage.getItem('dkn-workbench:sidebar-install-notice')),'shown');
- await page.getByRole('button',{name:'继续使用',exact:true}).click();
- await page.reload();await page.getByRole('button',{name:'继续使用',exact:true}).click();
+ await page.reload();await page.getByRole('heading',{name:'Codex · 项目模式'}).waitFor();
+ assert.equal(await page.getByRole('dialog',{name:'感谢使用 DKN Workbench',exact:true}).count(),0);
  await page.waitForTimeout(1800);assert.equal(await firstInstall.count(),0);assert.deepEqual(errors,[]);
  await writeFile('research/ui/results.json',JSON.stringify({passed:true,errors,openedSession:'dsh-imported-session',checks:['Codex settings connection','native sidebar project rename and root update request','native sidebar project reorder request','native sidebar project expansion','Codex thread import request','open imported session through DSH native workspace navigation','dark/light/narrow layouts','fallback project expansion and native conversation opening without sidebar slot','first-install patch notice persists dismissal across page reloads']},null,2));console.log('UI checks passed');
 }finally{await browser.close();await new Promise(r=>server.close(r));}

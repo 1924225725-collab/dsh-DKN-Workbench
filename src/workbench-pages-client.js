@@ -35,12 +35,12 @@
       const textOf=node=>typeof node==='string'?node:React.isValidElement(node)?React.Children.toArray(node.props.children).map(textOf).join(' '):'';
       const fieldGroup=node=>{const text=textOf(node);return /超时|工作目录|数据目录|代理|权限|重试|上下文|环境变量/.test(text)?'高级':/模型|model/i.test(text)?'模型':'连接';};
       const rows=React.Children.toArray(children).flatMap(card=>{
-        if(!/配置|完整/.test(card.props?.title||'')||/登录/.test(card.props?.title||''))return[card];
+        if(card.props?.tab||!/配置|完整/.test(card.props?.title||'')||/登录/.test(card.props?.title||''))return[card];
         const fields=React.Children.toArray(card.props.children).flatMap(item=>React.isValidElement(item)&&item.type==='div'&&React.Children.toArray(item.props.children).some(field=>field?.type==='label')?React.Children.toArray(item.props.children):[item]);
         if(!fields.some(field=>field?.type==='label'))return[card];
         return ['连接','模型','高级'].map(group=>{const items=fields.filter(field=>fieldGroup(field)===group);return items.length?h(SettingsCard,{key:(card.props.title||'')+group,title:group==='连接'?'连接设置':group==='模型'?'模型设置':'高级参数'},...items):null;}).filter(Boolean);
       }),pending=pendingWorkbenchAction(children);
-      const category=child=>{const name=child.props?.title||'';return /额度|用量|签到|奖励/.test(name)?'用量':/模型/.test(name)?'模型':/配置|目录|路径|超时|权限|参数|高级|完整/.test(name)&&!/登录|授权|安装/.test(name)?'高级':'连接';};
+      const category=child=>{if(child.props?.tab)return child.props.tab;const name=child.props?.title||'';return /额度|用量|签到|奖励/.test(name)?'用量':/模型/.test(name)?'模型':/配置|目录|路径|超时|权限|参数|高级|完整/.test(name)&&!/登录|授权|安装/.test(name)?'高级':'连接';};
       const visible=rows.filter(child=>category(child)===tab);
       return h(WorkbenchPage,{ctx,title:title||providerNames[provider],provider,active:project?'project':'models',subtitle:project?'原生项目与本机运行时':'连接、配置与验证，在同一个工作区完成',activity:pending,activityLabel:pending?'正在处理，稍等一下':'准备好帮你连接'},
         h('div',{className:'wp-toolbar'},h(ProviderStatus,{provider,project}),!project?h(ProviderVerify,{provider}):null,settingsControl('button',{type:'button',onClick:()=>provider==='antigravity'?window.open('https://antigravity.google/','_blank','noopener'):openProviderQuota(ctx,provider)},provider==='antigravity'?'官方账号与额度':'额度与用量')),

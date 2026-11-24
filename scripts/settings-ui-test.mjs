@@ -14,7 +14,7 @@ const ctx=Object.create({emit(){},configForms:{get(){if(window.failForm)throw Er
 const t=key=>({cn:'国内版',intl:'国际版',regionPicker:'配置区域',quickSetup:'CLI 安装与检测',navconnection:'连接',navmodels:'模型',navusage:'用量'}[key]||key);
 const regions=['cn','intl'].map(id=>({id,props:{t,region:id,legacyForm:form,statusUrl:'/plugins/dsh-codebuddy-cli-'+id+'/status'}}));
 function render(id){root.render(React.createElement(id==='codebuddy-cli'?api.UnifiedSettingsPage:pages[id],id==='codebuddy-cli'?{ctx,t,regions}:{ctx}));}
-window.renderPerformance=node=>root.render(React.createElement(api.PluginPerformancePill,{useChat:selector=>selector({legacy:{nodes:node?[node]:[]}})}));window.render=render;window.setAllFlags=async()=>{for(const key of Object.keys(value))await form.set(key,'false')};window.renderFooter=()=>root.render(React.createElement(api.QuotaFooterAction,{ctx,wide:true}));render('dkn-agent-models');</script>`;
+window.renderPerformance=node=>root.render(React.createElement(api.PluginPerformancePill,{useChat:selector=>selector({legacy:{nodes:node?[node]:[]}})}));window.render=render;window.readSetting=key=>form.getSnapshot().value[key];window.setAllFlags=async()=>{for(const key of Object.keys(value))await form.set(key,'false')};window.renderFooter=()=>root.render(React.createElement(api.QuotaFooterAction,{ctx,wide:true}));render('dkn-agent-models');</script>`;
 const probes=[];let updateQueries=0;const claimedRewards=new Set();let rewardClaims=0;let failedRewardQuery='';let autoEnabled=false;let backgroundPrefs={running:true,keepAlive:false,autoStart:false,version:'fixture'};
 const server=createServer((req,res)=>{
  if(req.url.endsWith('/background/state')){res.writeHead(200,{'Content-Type':'application/json'});return res.end(JSON.stringify(backgroundPrefs));}
@@ -41,9 +41,20 @@ try{
  assert.equal(await thanks.locator('button').first().evaluate(node=>getComputedStyle(node).transitionDuration),'0s');
  await page.emulateMedia({reducedMotion:'no-preference'});
  assert.equal(await page.getByRole('link',{name:'☆ 前往 GitHub',exact:true}).getAttribute('href'),'https://github.com/1924225725-collab/dsh-DKN-Workbench');
- await page.getByRole('button',{name:'继续使用',exact:true}).click();
+ await thanks.getByRole('button',{name:'阅读使用攻略',exact:true}).click();
+ const guide=page.getByRole('dialog',{name:'使用攻略',exact:true});
+ await guide.getByRole('heading',{name:'安装并跑通第一条对话',exact:true}).waitFor();
+ await guide.getByRole('heading',{name:'在其他软件使用统一 API',exact:true}).waitFor();
+ await guide.getByRole('button',{name:'关闭使用攻略',exact:true}).click();
+ await page.reload();
+ await page.getByRole('heading',{name:'模型与平台',exact:true}).waitFor();
+ assert.equal(await thanks.count(),0);
  await page.getByRole('button',{name:'插件总设置',exact:true}).click();
  const general=page.getByRole('dialog',{name:'插件总设置',exact:true});await general.waitFor();assert.equal(await general.getByRole('checkbox').count(),7);
+ await general.getByRole('button',{name:'使用攻略',exact:true}).click();
+ await guide.getByRole('heading',{name:'连接问题怎么排查',exact:true}).waitFor();
+ await page.keyboard.press('Escape');
+ await general.waitFor();
  await general.getByLabel('CodeBuddy 用量',{exact:true}).uncheck();await page.waitForFunction(()=>value.showCodeBuddyQuota==='false');assert.equal(await general.getByLabel('CodeBuddy 用量',{exact:true}).isChecked(),false);
  await general.getByLabel('CodeBuddy 用量',{exact:true}).check();await page.waitForFunction(()=>value.showCodeBuddyQuota==='true');
  await page.setViewportSize({width:390,height:800});assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);await page.screenshot({path:'research/ui/plugin-general-settings-narrow.png'});await page.getByRole('button',{name:'关闭插件总设置',exact:true}).click();await page.setViewportSize({width:1100,height:800});
@@ -65,6 +76,27 @@ try{
  const keep=summary.getByLabel('退出 DSH 后继续运行',{exact:true});await keep.waitFor();await keep.click();await page.waitForFunction(()=>document.querySelector('input[aria-label=\"退出 DSH 后继续运行\"]').checked);assert.equal(backgroundPrefs.keepAlive,true);
  const auto=summary.getByLabel('自动签到',{exact:true});await auto.waitFor();await page.waitForFunction(()=>!document.querySelector('input[aria-label="自动签到"]').disabled);assert.equal(await auto.isChecked(),false);await auto.check();await summary.getByText(/下次计划：/).waitFor();assert.equal(autoEnabled,true);assert.equal(rewardClaims,0);await auto.uncheck();await page.waitForFunction(()=>!document.querySelector('input[aria-label="自动签到"]').disabled);assert.equal(autoEnabled,false);
  await page.evaluate(()=>window.render('dkn-agent-models'));
+ let deployedQoder=false;
+ await page.route('**/plugins/dkn-agent/cli/setup*',async route=>{
+   if(route.request().method()==='POST'){
+     assert.deepEqual(route.request().postDataJSON(),{provider:'qoder'});
+     deployedQoder=true;
+     await route.fulfill({json:{supported:true,state:'installing'}});
+   }else{
+     await route.fulfill({json:{supported:true,state:deployedQoder?'ready':undefined}});
+   }
+ });
+ await page.route('**/plugins/dkn-agent/qoder/status',route=>route.fulfill({
+   json:{state:deployedQoder?'found':'missing',path:deployedQoder?'C:/fixture/qoder.exe':undefined},
+ }));
+ await page.getByRole('button',{name:'Qoder',exact:true}).click();
+ assert.equal(await page.getByRole('link',{name:'官方安装指南 ↗',exact:true}).getAttribute('href'),'https://docs.qoder.com/cli/installation');
+ await page.getByRole('button',{name:'一键部署 CLI',exact:true}).click();
+ await page.getByText('已找到 CLI',{exact:true}).waitFor();
+ assert.equal(await page.getByRole('button',{name:'一键部署 CLI',exact:true}).count(),0);
+ await page.unroute('**/plugins/dkn-agent/cli/setup*');
+ await page.unroute('**/plugins/dkn-agent/qoder/status');
+ await page.evaluate(()=>window.render('dkn-agent-models'));
  const checkin=page.getByRole('region',{name:'签到状态',exact:true});
  await checkin.getByText('CodeBuddy 国内：可签到',{exact:true}).waitFor();assert.equal(rewardClaims,0);
  await checkin.getByRole('button',{name:'一键签到',exact:true}).click();
@@ -84,7 +116,27 @@ try{
   await page.getByRole('button',{name:label,exact:true}).click();
   await page.locator('[data-provider-settings="'+provider+'"]').waitFor();
   assert.equal(await page.getByRole('region',{name:'签到状态',exact:true}).count(),0);
-  if(provider==='antigravity'){await page.getByRole('navigation',{name:'配置内容'}).getByRole('button',{name:'高级',exact:true}).click();await page.getByText('使用 Windows 系统代理',{exact:false}).waitFor();await page.getByRole('navigation',{name:'配置内容'}).getByRole('button',{name:'连接',exact:true}).click();await page.getByRole('button',{name:'发送测试',exact:true}).click();await page.getByRole('status').filter({hasText:'OK'}).waitFor();await page.screenshot({path:'research/ui/settings-antigravity-dark.png',fullPage:true});continue;}
+  const cliSettings={
+   codex:['CLI 配置','Codex CLI 路径','codexCliPath'],
+   qoder:['Qoder ACP 配置','CLI 完整路径','qoderPath'],
+   antigravity:['Antigravity ACP 配置','CLI 完整路径','antigravityPath'],
+   zcode:['CLI 配置','ZCode CLI 路径','zcodeCliPath'],
+  };
+  if(cliSettings[provider]){
+   const [heading,label,key]=cliSettings[provider];
+   await page.getByRole('heading',{name:heading,exact:true}).waitFor();
+   const input=page.getByRole('textbox',{name:label,exact:true});
+   await input.fill('C:/fixture/'+provider+'.exe');
+   await input.blur();
+   await page.waitForFunction(({key,provider})=>window.readSetting(key)==='C:/fixture/'+provider+'.exe',{key,provider});
+  }
+  if(provider==='antigravity'){
+   await page.getByText('使用 Windows 系统代理',{exact:false}).waitFor();
+   await page.getByRole('button',{name:'发送测试',exact:true}).click();
+   await page.getByRole('status').filter({hasText:'OK'}).waitFor();
+   await page.screenshot({path:'research/ui/settings-antigravity-dark.png',fullPage:true});
+   continue;
+  }
   if(provider==='codebuddy'){
    await page.getByRole('button',{name:'国际版',exact:true}).click();
    assert.equal(await page.locator('[data-region="intl"]').isVisible(),true);

@@ -1,6 +1,6 @@
 # dsh-DKN-Workbench
 
-DKN Workbench for DSH (formerly DKN Agent) is an integrated workbench plugin for DeepSeek Harness on Windows. Current: `2.3.9`, targeting DSH `0.2.2-rc.1` / `0.2.2-rc.3` / `0.2.2-rc.5`. Includes native Codex projects/conversations, domestic and international CodeBuddy CLI model providers, a ZCode CLI app-server model provider, and an embedded collaboration core extracted from Agent Hub. No gateway, remote cluster or DSH desktop distribution is included.
+DKN Workbench for DSH (formerly DKN Agent) is an integrated workbench plugin for DeepSeek Harness on Windows. Current: `2.4.2`, targeting DSH `0.2.2-rc.1` / `0.2.2-rc.3` / `0.2.2-rc.5`. Includes native Codex projects/conversations, domestic and international CodeBuddy CLI model providers, a ZCode CLI app-server model provider, and an embedded collaboration core extracted from Agent Hub. No gateway, remote cluster or DSH desktop distribution is included.
 
 OrcaTerm supports WeChat OAuth, model selection, text conversations, real-reply verification, AI question quota queries and unified API export. Credentials are protected with Windows CurrentUser DPAPI and shared with the independent background. This channel currently supports text. Images, tool calls and daily check-in are not enabled.
 
@@ -12,6 +12,10 @@ The default minimal appearance shares the same routing scene and configuration d
 2.2.6 detects an independent Node.js runtime under Electron hosts and provides a copyable AI deployment prompt when missing. Saved API settings remain visible, rewards report that the worker is required, and DSH HTTP routes now pass host admission checks. See [runtime guide](docs/background-environment.md).
 
 ## Use
+
+[DKN Workbench user guide (Chinese)](docs/workbench-guide.md)
+
+Open Models & Platforms, select a provider, then open Connection. One-click CLI setup is available for Codex, Qoder, and Antigravity on Windows x64, and for Codex on Windows ARM64. ZCode downloads and opens the official desktop installer on Windows x64 and ARM64. Provider pages link to official installation guides. After setup, sign in and run the connection test.
 
 ### Supported platforms
 

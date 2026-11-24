@@ -74,8 +74,8 @@
       const field=(label,key,type='text',placeholder='')=>h('label',{style:{display:'grid',gap:6,flex:1,minWidth:220}},h('span',null,label),settingsControl('input',{type,placeholder,value:formDraft[key]??formSnapshot.value?.[key]??'',onChange:e=>setFormDraft(current=>({...current,[key]:e.target.value})),onBlur:e=>saveField(key,e.target.value)}));
       const flag=(label,key)=>h('label',{style:{display:'flex',alignItems:'center',gap:8,minWidth:220}},h('input',{type:'checkbox',checked:String(formDraft[key]??formSnapshot.value?.[key]??'true')==='true',onChange:e=>saveField(key,e.target.checked?'true':'false')}),h('span',null,label));
       const card=(title,children)=>h('section',{style:{marginTop:16,padding:16,border:'1px solid var(--dsw-alias-border-l4)',borderRadius:8,display:'grid',gap:12}},h('h3',{style:{margin:0,fontSize:16}},title),children);
-      const configCard=card('完整 Codex Agent',h(React.Fragment,null,h('p',{style:{margin:0,opacity:.75}},'这是 DSH 原生会话使用的 app-server 运行时配置。'),h('div',{style:{display:'flex',flexWrap:'wrap',gap:12}},field('Codex Agent / app-server 路径','codexPath'),field('Codex 数据目录（可选）','codexHome'),field('DeepSeek API Key 环境变量','deepSeekApiKeyEnv','text','DEEPSEEK_API_KEY')),h('p',{style:{fontSize:12,opacity:.7,margin:0}},'插件只读取该环境变量进行余额请求，不保存或显示 API Key。'),h('p',{style:{fontSize:12,opacity:.7,margin:0}},formSnapshot.status==='ready'?(formSnapshot.writable?'配置可保存':'当前配置只读'):'配置表单尚未加载')));
-      return h(ProviderSettingsLayout,{ctx,provider:'codex',title:'Codex · 项目模式',project:true},h('p',null,state.connected?'本机 Codex 已连接。已有对话会显示在 DSH 原生 Workspace/Session 列表下方，并在 DSH 原生对话界面继续。':'连接后可从 DSH 原生会话使用 Codex。'),h('div',{style:{display:'flex',alignItems:'center',gap:10}},h('span',{style:{color:state.connected?'#42c883':'#a0a6b2'}},state.connected?'● 已连接':'● 未连接'),settingsControl('button',{type:'button',disabled:busy,onClick:toggle},busy?'处理中…':state.connected?'断开 Codex':'连接本机 Codex')),configCard,h(WorkbenchPatchNotice),!nativeSidebarReady?h(CodexProjectFallback,{ctx,connected:state.connected}):null,patchMessage?h('p',{role:'status'},patchMessage):null,patch.attempts?.length?h('details',null,h('summary',null,'定位诊断'),h('pre',null,JSON.stringify(patch.attempts,null,2))):null,!nativeSidebarReady&&!patchMessage&&patch.status!=='checking'?h('p',{role:'status'},'Codex 项目区尚未启用，请重启 DSH 或检查插件状态。'):null,state.error?h('p',{role:'alert'},state.error):null);
+      const configCard=card('完整 Codex Agent',h(React.Fragment,null,h('p',{style:{margin:0,opacity:.75}},'这是 DSH 原生会话使用的 app-server 运行时配置。'),h('div',{style:{display:'flex',flexWrap:'wrap',gap:12}},field('DeepSeek API Key 环境变量','deepSeekApiKeyEnv','text','DEEPSEEK_API_KEY')),h('p',{style:{fontSize:12,opacity:.7,margin:0}},'插件只读取该环境变量进行余额请求，不保存或显示 API Key。'),h('p',{style:{fontSize:12,opacity:.7,margin:0}},formSnapshot.status==='ready'?(formSnapshot.writable?'配置可保存':'当前配置只读'):'配置表单尚未加载')));
+      return h(ProviderSettingsLayout,{ctx,provider:'codex',title:'Codex · 项目模式',project:true},h('p',null,state.connected?'本机 Codex 已连接。已有对话会显示在 DSH 原生 Workspace/Session 列表下方，并在 DSH 原生对话界面继续。':'连接后可从 DSH 原生会话使用 Codex。'),h('div',{style:{display:'flex',alignItems:'center',gap:10}},h('span',{style:{color:state.connected?'#42c883':'#a0a6b2'}},state.connected?'● 已连接':'● 未连接'),settingsControl('button',{type:'button',disabled:busy,onClick:toggle},busy?'处理中…':state.connected?'断开 Codex':'连接本机 Codex')),h(SettingsCard,{title:'app-server 配置',tab:'连接'},field('Codex Agent / app-server 路径','codexPath'),field('Codex 数据目录（可选）','codexHome')),configCard,h(WorkbenchPatchNotice),!nativeSidebarReady?h(CodexProjectFallback,{ctx,connected:state.connected}):null,patchMessage?h('p',{role:'status'},patchMessage):null,patch.attempts?.length?h('details',null,h('summary',null,'定位诊断'),h('pre',null,JSON.stringify(patch.attempts,null,2))):null,!nativeSidebarReady&&!patchMessage&&patch.status!=='checking'?h('p',{role:'status'},'Codex 项目区尚未启用，请重启 DSH 或检查插件状态。'):null,state.error?h('p',{role:'alert'},state.error):null);
     }
     function CodexCliSettingsPage({ctx}){
       const form=ctx.configForms?.get?.('dkn-agent-codex');
@@ -89,9 +89,19 @@
       React.useEffect(()=>{if(!form)return;const sync=()=>{const next=form.getSnapshot();setSnapshot(next);if(next.value)setDraft(current=>({...next.value,...current}))};sync();return form.subscribe(sync)},[form]);
       const refreshStatus=React.useCallback(async()=>{setBusy('status');setError('');try{setStatus(await codexApi('cli/status'));}catch(e){setStatus({state:'error',error:e.message});setError(e.message)}finally{setBusy('')}},[]);
       React.useEffect(()=>{refreshStatus();},[refreshStatus]);
-      const save=(key,value)=>{setDraft(current=>({...current,[key]:value}));if(form?.set&&snapshot.writable)form.set(key,value).catch(e=>setError('保存配置失败：'+e.message));};
+      const save=async(key,value)=>{
+        if(!form?.set||!snapshot.writable||String(snapshot.value?.[key]??'')===value)return;
+        setDraft(current=>({...current,[key]:value}));
+        try{
+          await form.set(key,value);
+          if(key==='codexCliPath'){
+            setTestResult(null);
+            await refreshStatus();
+          }
+        }catch(e){setError('保存配置失败：'+e.message);}
+      };
       const valueOf=key=>draft[key]??snapshot.value?.[key]??'';
-      const field=(label,key,type='text',placeholder='')=>h('label',{style:{display:'grid',gap:6,flex:1,minWidth:230}},h('span',null,label),settingsControl('input',{type,placeholder,value:valueOf(key),onChange:e=>setDraft(current=>({...current,[key]:e.target.value})),onBlur:e=>save(key,e.target.value)}));
+      const field=(label,key,type='text',placeholder='')=>h('label',{style:{display:'grid',gap:6,flex:1,minWidth:230}},h('span',null,label),settingsControl('input',{type,placeholder,disabled:!snapshot.writable,value:valueOf(key),onChange:e=>setDraft(current=>({...current,[key]:e.target.value})),onBlur:e=>save(key,e.target.value)}));
       const modelIds=Array.isArray(status.models)&&status.models.length?status.models:String(valueOf('codexCliModels')||'').split(/[\r\n,;]+/u).map(value=>value.trim()).filter(Boolean);
       const runTest=async()=>{setBusy('test');setError('');setTestResult(null);try{const result=await codexApi('cli/test',{prompt:testPrompt});setTestResult(result);}catch(e){setTestResult({state:'error',error:e.message});}finally{await refreshStatus();}};
       const statusText=status.state==='ready'?'已找到 CLI':status.state==='error'?'CLI 检测失败':'检测中';
@@ -99,6 +109,7 @@
       const card=(title,children)=>h(SettingsCard,{title},children);
       const actionButton=(label,onClick,disabled=false)=>settingsControl('button',{type:'button',disabled,onClick},label);
       return h(ProviderSettingsLayout,{ctx,provider:'codex',title:'Codex CLI'},
+        h(CliSetupCard,{provider:'codex',found:status.state==='ready',checking:status.state==='checking',onRefresh:refreshStatus}),
         h(SettingsCard,{title:'运行状态'},
           h('strong',{role:'status',style:{color:statusColor}},statusText),
           status.path?h('code',{style:{overflowWrap:'anywhere'}},status.path):null,
@@ -107,8 +118,10 @@
           status.error?h('p',{role:'alert',style:{margin:0}},status.error):null),
         h(SettingsCard,{title:'登录与授权'},
           h(LoginInstructions,{command:'codex login'},'如果还没登录，在终端运行命令并完成浏览器授权，然后返回这里发送连接测试。')),
+        h(SettingsCard,{title:'CLI 配置',tab:'连接'},
+          field('Codex CLI 路径','codexCliPath','text','留空自动发现')),
         card('基础配置',h(React.Fragment,null,
-          h('div',{style:{display:'flex',flexWrap:'wrap',gap:12}},field('Codex CLI 路径','codexCliPath','text','留空自动发现'),field('默认模型 ID','codexCliModel','text','留空使用 CLI 默认模型')),
+          field('默认模型 ID','codexCliModel','text','留空使用 CLI 默认模型'),
           h('label',{style:{display:'grid',gap:6}},h('span',null,'模型清单'),settingsControl('textarea',{rows:3,placeholder:'例如 gpt-5-codex\n或使用逗号分隔',value:valueOf('codexCliModels'),onChange:e=>setDraft(current=>({...current,codexCliModels:e.target.value})),onBlur:e=>save('codexCliModels',e.target.value)})),
           modelIds.length?h('label',{style:{display:'grid',gap:6}},h('span',null,'选择默认模型'),settingsControl('select',{value:valueOf('codexCliModel')||modelIds[0],onChange:e=>save('codexCliModel',e.target.value)},...modelIds.map(model=>h('option',{key:model,value:model},model)))):null,
           modelIds.length?h('div',{style:{display:'flex',gap:6,flexWrap:'wrap'}},...modelIds.map(model=>h('span',{key:model,style:{padding:'4px 8px',borderRadius:999,border:'1px solid var(--dsw-alias-border-l4)',fontSize:12}},model))):h('small',{style:{opacity:.65}},'未填写模型清单时使用 CLI 默认模型。'),
@@ -122,6 +135,54 @@
           testResult?.state==='ready'?h('div',{role:'status',style:{padding:12,borderRadius:8,background:'rgba(66,200,131,.1)'}},h('strong',null,'调用成功'),h('p',{style:{whiteSpace:'pre-wrap',margin:'8px 0 0'}},testResult.text||'CLI 已返回，但没有可显示的文本。')):null,
           testResult?.state==='error'?h('p',{role:'alert'},testResult.error):null)),
         error?h('p',{role:'alert',style:{marginTop:16}},error):null);
+    }
+    const providerInstallDocs={
+      codex:'https://github.com/openai/codex#installing-and-running-codex-cli',
+      qoder:'https://docs.qoder.com/cli/installation',
+      antigravity:'https://antigravity.google/docs/install?tab=cli',
+      zcode:'https://zcode.z.ai/cn/docs/install',
+      trae:'https://docs.trae.cn/ide_get-started-with-trae',
+      orcaterm:'https://orcaterm.ai/doc/quickstart/desktop',
+    };
+    function OfficialInstallGuide({provider}){
+      return h('a',{href:providerInstallDocs[provider],target:'_blank',rel:'noopener noreferrer'},'官方安装指南 ↗');
+    }
+    function CliSetupCard({provider,found,checking,onRefresh}){
+      const [job,setJob]=React.useState(null),[starting,setStarting]=React.useState(false),[error,setError]=React.useState('');
+      const refreshRef=React.useRef(onRefresh);
+      refreshRef.current=onRefresh;
+      const working=job?.state==='installing'||job?.state==='wizard';
+      const statePath='cli/setup?provider='+provider;
+      React.useEffect(()=>{
+        let active=true;
+        const update=async()=>{
+          try{
+            const next=await codexApi(statePath);
+            if(!active)return;
+            setJob(next);
+            setError('');
+            if(working&&(next.state==='ready'||next.state==='wizard-closed'))await refreshRef.current?.();
+          }catch(error){if(active)setError(error.message);}
+        };
+        void update();
+        const timer=working?setInterval(update,2000):null;
+        return()=>{active=false;clearInterval(timer);};
+      },[statePath,working]);
+      const start=async()=>{
+        setStarting(true);
+        setError('');
+        try{setJob(await codexApi('cli/setup',{provider}));}
+        catch(error){setError(error.message);}
+        finally{setStarting(false);}
+      };
+      return h(SettingsCard,{title:'CLI 安装与检测',tab:'连接'},
+        h('p',null,found?'已找到本机 CLI。':job?.wizard?'下载官方 ZCode 桌面安装包，打开安装向导。':job?.supported?'从官方渠道部署到当前用户目录。安装后可在本页登录和验证。':job?'当前系统请按官方指南安装。':'正在读取部署选项…'),
+        h('div',{className:'wp-toolbar'},
+          !found&&job?.supported&&job.state!=='ready'?settingsControl('button',{type:'button',disabled:checking||starting||working,onClick:start},job.state==='wizard'?'等待安装向导…':working||starting?'正在下载与校验…':job.wizard?'下载并打开安装向导':'一键部署 CLI'):null,
+          h(OfficialInstallGuide,{provider})),
+        job?.state==='ready'&&!found?h('p',{role:'status'},'CLI 已部署。若填写了其他 CLI 路径，请清空该路径或改用：',h('code',{style:{overflowWrap:'anywhere'}},job.path)):null,
+        job?.state==='wizard-closed'?h('p',{role:'status'},found?'已检测到 ZCode CLI。如果模型列表还没有 ZCode，请重启 DSH。':'安装向导已关闭。若已完成安装，请点击「检测 CLI」，或填写实际安装路径。'):null,
+        error||job?.error?h('p',{role:'alert'},error||job.error):null);
     }
     function SettingsCard({title,children}){
       return h('section',{style:{...sectionStyle(),marginTop:16,background:'var(--dsw-alias-bg-layer-2, transparent)'}},
@@ -187,6 +248,7 @@
         status.enabled===true?'已开启，当前尚未注册。保存设置后完全退出并重启 DSH。':'等待检测';
       const accountMode=valueOf('zcodeAccountMode','standalone');
       return h(ProviderSettingsLayout,{ctx,provider:'zcode'},
+        h(CliSetupCard,{provider:'zcode',found:status.state==='found',checking:status.state==='checking',onRefresh:detectCli}),
         h(SettingsCard,{title:'运行状态'},
           h('strong',{role:'status'},cliState),
           status.path?h('code',{style:{overflowWrap:'anywhere'}},status.path):null,
@@ -198,9 +260,11 @@
           accountMode==='start-plan'
             ?h(Notice,null,'Desktop Start Plan 使用 ZCode 桌面客户端的登录状态。请在 ZCode 桌面端登录并确认套餐可用，然后返回这里发送连接测试。')
             :h(LoginInstructions,{command:'zcode login'},'在终端运行登录命令并完成浏览器授权。授权后返回这里发送连接测试。')),
-        h(SettingsCard,{title:'基础配置'},
+        h(SettingsCard,{title:'CLI 配置',tab:'连接'},
           h('label',{style:rowStyle},h('input',{type:'checkbox',disabled,checked:String(valueOf('zcodeEnabled','true'))==='true',onChange:e=>void save('zcodeEnabled',String(e.target.checked))}),'启用 ZCode 模型提供方'),
           field('ZCode CLI 路径','zcodeCliPath','text','留空自动发现'),
+          field('Node 可执行文件','zcodeCliNode','text','node'),
+          h(Notice,null,'ZCode CLI 需要独立 Node.js。未安装时可从 ',h('a',{href:'https://nodejs.org/zh-cn/download',target:'_blank',rel:'noopener noreferrer'},'Node.js 官网'),' 下载，安装后可填写 node.exe 的完整路径。'),
           select('账号通道','zcodeAccountMode',[['standalone','Standalone / Coding Plan'],['start-plan','Desktop Start Plan']]),
           h(Notice,null,snapshot?.writable?'修改后自动保存。提供方开关或运行路径变更后，请重启 DSH。':'当前配置不可写。'),
           error?h('p',{role:'alert'},error):null),
@@ -210,7 +274,6 @@
           test?.state==='ready'?h('div',{role:'status'},h('strong',null,'已收到回复 · '+test.model),h('p',{style:{whiteSpace:'pre-wrap',overflowWrap:'anywhere'}},test.text)):null,
           test?.state==='error'?h('p',{role:'alert'},test.error):null),
         h(SettingsCard,{title:'高级配置'},
-          field('Node 可执行文件','zcodeCliNode','text','node'),
           field('工作目录','zcodeCliCwd','text','留空使用独立临时工作区'),
           field('ZCode 数据目录','zcodeDataBaseDir','text','留空使用原生目录'),
           field('单次回合超时（毫秒）','zcodeCliTimeoutMs','number','900000'),

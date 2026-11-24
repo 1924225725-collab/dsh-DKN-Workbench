@@ -15,6 +15,7 @@ const accountPool=await readFile(new URL('../src/account-pool-client.js',import.
 const providerStatus=await readFile(new URL('../src/provider-status-client.js',import.meta.url),'utf8');
 const collaborationTools=await readFile(new URL('../src/collaboration-tools-client.js',import.meta.url),'utf8');
 const notices=await readFile(new URL('../src/workbench-notices-client.js',import.meta.url),'utf8');
+const guide=await readFile(new URL('../docs/workbench-guide.md',import.meta.url),'utf8');
 const rewards=await readFile(new URL('../src/rewards-client.js',import.meta.url),'utf8');
 const motionClient=await readFile(new URL('../src/motion-client.js',import.meta.url),'utf8');
 const traeClient=await readFile(new URL('../src/trae-client.js',import.meta.url),'utf8');
@@ -29,6 +30,7 @@ const codex='    const DKN_WORKBENCH_ART='+JSON.stringify(workbenchArt)+';\n'+tr
 source=source.replace('    Object.assign(exports, { BUNDLE_NAME, apply, inject, name, createFeedbackKit, IssueFeedback })',()=>codex+'\n    function apply(ctx) { applyCodeBuddy(ctx); applyCodex(ctx) }\n    Object.assign(exports, { BUNDLE_NAME, apply, inject, name, createFeedbackKit, IssueFeedback, OrcaTermSettingsPage, TraeSettingsPage, AntigravitySettingsPage, ApiServicePage, CodexSettingsPage, CodexProjectsSection, CollaborationPage, DknSettingsPage, HubSettingsPage, QoderSettingsPage, DknModelsPage, CodexCliSettingsPage, ZcodeSettingsPage, QuotaSettingsPage, QuotaFooterAction, UnifiedSettingsPage, AccountPool, providerAvailability, WorkbenchSupport, WorkbenchUpdateNotice, compactQuota, DailyRewards, CheckinOverview, PluginPerformancePill })');
 const version=JSON.parse(await readFile(new URL('../package.json',import.meta.url),'utf8')).version;
 source=source.replaceAll('__DKN_AGENT_VERSION__',version);
+source=source.replace("'__DKN_WORKBENCH_GUIDE__'",()=>JSON.stringify(guide.trim().split(/\r?\n\s*\r?\n/)));
 new Script(source,{filename:'dsh-dkn-agent/client.js'});
 await writeFile(new URL('../lib/client.js',import.meta.url),source);
 console.log('Built DKN Agent client');
